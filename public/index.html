@@ -1,0 +1,1284 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Cohort Interview Agent</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg-color: #0A0B14;
+            --panel-bg: rgba(255, 255, 255, 0.03);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --chat-bg: rgba(7, 10, 23, 0.95);
+            --agent-border: rgba(124, 58, 237, 0.3);
+            --accent-purple: #7c3aed;
+            --accent-blue: #3b82f6;
+            --text-primary: #eef2ff;
+            --text-secondary: #9ca3af;
+            --text-muted: #8b97b9;
+            --success-bg: rgba(16, 185, 129, 0.08);
+            --warning-bg: rgba(245, 158, 11, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            background: radial-gradient(circle at bottom right, rgba(26, 5, 51, 0.6), transparent 22%),
+                linear-gradient(180deg, #0A0B14 0%, #090A13 100%);
+            color: var(--text-primary);
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(transparent 0 1px, rgba(255, 255, 255, 0.03) 1px 2px);
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app-shell {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: 0 40px 120px rgba(0, 0, 0, 0.45);
+            display: flex;
+            gap: 16px;
+            overflow: hidden;
+        }
+
+        .main-panel {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 0;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .sidebar {
+            width: 320px;
+            flex: 0 0 320px;
+            min-width: 320px;
+            height: calc(100vh - 48px);
+            min-height: 0;
+            gap: 12px;
+            overflow-y: auto;
+            padding: 16px;
+            box-sizing: border-box;
+            background: rgba(9, 10, 22, 0.95);
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0 20px 20px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 0;
+        }
+
+        .sidebar {
+            scrollbar-width: none;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 28px 28px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .header-logo {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            display: grid;
+            place-items: center;
+            box-shadow: 0 0 30px rgba(124, 58, 237, 0.24);
+        }
+
+        .header-logo::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: radial-gradient(circle at center, rgba(167, 139, 250, 0.35), transparent 60%);
+        }
+
+        .header-logo span {
+            position: relative;
+            z-index: 1;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.08em;
+        }
+
+        .header-logo::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #10b981;
+            border: 2px solid rgba(255,255,255,0.18);
+            bottom: -2px;
+            right: -2px;
+            box-shadow: 0 0 0 rgba(16,185,129,0.4);
+            animation: statusRipple 1.5s infinite ease-out;
+        }
+
+        .header-logo i {
+            position: relative;
+            z-index: 1;
+            font-size: 24px;
+            color: #fff;
+        }
+
+        .header-text h1 {
+            font-size: 1.9rem;
+            font-weight: 800;
+            line-height: 1.05;
+        }
+
+        .header-text p {
+            margin-top: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #9cc1ff;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .online-indicator {
+            position: relative;
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: #1dd7a8;
+            box-shadow: 0 0 12px rgba(29, 215, 168, 0.9);
+        }
+
+        .online-indicator::after {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: 999px;
+            border: 1px solid rgba(29, 215, 168, 0.45);
+            animation: ripple 1.8s infinite ease-out;
+            opacity: 0;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.75;
+            }
+            50% {
+                transform: scale(1.14);
+                opacity: 1;
+            }
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(2.2);
+                opacity: 0;
+            }
+        }
+
+        @keyframes statusRipple {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16,185,129,0.4);
+            }
+            100% {
+                box-shadow: 0 0 0 8px rgba(16,185,129,0);
+            }
+        }
+
+        .start-screen {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px;
+        }
+
+        .start-content {
+            width: 100%;
+            max-width: 620px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 28px;
+            text-align: center;
+        }
+
+        .hero-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8b5cf6, #4f46e5);
+            box-shadow: 0 0 60px rgba(124, 58, 237, 0.4);
+            position: relative;
+            animation: morph 6s ease-in-out infinite;
+        }
+
+        .hero-avatar::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.08), transparent 65%);
+        }
+
+        @keyframes morph {
+            0% {
+                border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            }
+            50% {
+                border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+            }
+            100% {
+                border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            }
+        }
+
+        .start-screen h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.03;
+            background: linear-gradient(135deg, #ffffff 60%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+
+        .start-screen p {
+            max-width: 520px;
+            color: #b0b8d9;
+            font-size: 1rem;
+            line-height: 1.8;
+        }
+
+        .start-btn {
+            border: none;
+            border-radius: 50px;
+            padding: 14px 32px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 50px rgba(124, 58, 237, 0.7);
+        }
+
+        .chat-panel {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            min-height: 0;
+            min-width: 0;
+            background: rgba(10, 11, 20, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 24px;
+            overflow: hidden;
+        }
+
+        .messages {
+            flex: 1 1 auto;
+            min-width: 0;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 32px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            scroll-behavior: smooth;
+            white-space: pre-wrap;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+        }
+
+        .chat-input-wrap {
+            padding: 20px 28px 28px;
+            background: rgba(9, 10, 22, 0.92);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            flex-shrink: 0;
+            position: sticky;
+            bottom: 0;
+            z-index: 2;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(111, 66, 193, 0.25);
+            border-radius: 999px;
+            padding: 10px 16px;
+        }
+
+        .input-area:focus-within {
+            border-color: rgba(124, 58, 237, 0.55);
+            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+        }
+
+        input {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #eef2ff;
+            font-size: 18px;
+            line-height: 1.6;
+            padding: 8px 6px;
+        }
+
+        input::placeholder {
+            color: #8b97b9;
+        }
+
+        .send-button {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            border: none;
+            display: grid;
+            place-items: center;
+            color: #fff;
+            box-shadow: 0 0 30px rgba(124, 58, 237, 0.35);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .send-button i {
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 50px rgba(124, 58, 237, 0.55);
+        }
+
+        .send-button.disabled {
+            background: #4a4a6a;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .thinking-box {
+            padding: 16px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .thinking-title {
+            margin-bottom: 10px;
+            font-size: 0.82rem;
+            color: #d1d5ff;
+            letter-spacing: 0.02em;
+        }
+
+        .thinking-subtitle {
+            margin-bottom: 10px;
+            font-size: 11px;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+
+        .thinking-dots {
+            margin-top: 10px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #7c3aed;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 3px;
+            animation: bounce 1.2s infinite ease-in-out;
+        }
+
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            40% {
+                transform: translateY(-6px);
+                opacity: 1;
+            }
+        }
+
+        .message-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 82%;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: slideUp 0.4s ease-out forwards;
+        }
+
+        .message-wrapper.agent {
+            align-self: flex-start;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .message-wrapper.candidate {
+            align-self: flex-end;
+            max-width: 80%;
+        }
+
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .message-meta-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .message-subtitle {
+            color: #6b7280;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            color: #fff;
+            background: rgba(82, 63, 170, 0.2);
+            border: 1px solid rgba(124, 58, 237, 0.18);
+            flex-shrink: 0;
+        }
+
+        .message-avatar span {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+        }
+
+        .thinking-subtitle {
+            margin-top: 6px;
+            font-size: 11px;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+
+        .message-avatar.user {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.95), rgba(124, 58, 237, 0.95));
+        }
+
+        .message-label {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-weight: 700;
+        }
+
+        .message {
+            padding: 20px 24px;
+            border-radius: 4px 16px 16px 16px;
+            line-height: 1.75;
+            font-size: 18px;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
+            position: relative;
+        }
+
+        .message.agent {
+            background: rgba(18, 19, 42, 0.92);
+            border: 1px solid rgba(124, 58, 237, 0.23);
+            border-left: 4px solid #7c3aed;
+            color: #e5e7ff;
+        }
+
+        .message.candidate {
+            background: linear-gradient(135deg, #4338ca, #7c3aed);
+            color: #fff;
+            border-radius: 16px 4px 16px 16px;
+            padding: 20px 24px;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 16px 24px;
+            background: rgba(18, 19, 42, 0.95);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            border-radius: 24px;
+            width: fit-content;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes typingBounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .score-label {
+            white-space: nowrap;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #a7b1ff;
+        }
+
+        .score-value {
+            font-size: 64px;
+            font-weight: 800;
+            color: #4a4a6a;
+            letter-spacing: 0.04em;
+        }
+
+        .score-card {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            padding: 20px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            min-height: 0;
+        }
+
+        .score-card.active .score-value {
+            color: #a78bfa;
+        }
+
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            color: #f8f9ff;
+            margin-bottom: 12px;
+        }
+
+        .score-label {
+            white-space: nowrap;
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #a7b1ff;
+            margin-bottom: 10px;
+        }
+
+        .score-value {
+            font-size: 64px;
+            font-weight: 800;
+            color: #4a4a6a;
+            letter-spacing: 0.04em;
+            margin-bottom: 14px;
+        }
+
+        .score-card.locked .score-value {
+            font-size: 48px;
+            color: #3a3a5c;
+        }
+
+        .locked-score-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .locked-score-icon {
+            font-size: 32px;
+            color: #c7c7e1;
+        }
+
+        .locked-score-box {
+            width: 100%;
+            border: 1px dashed #2a2a4a;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            background: rgba(124, 58, 237, 0.03);
+            color: #9ca3af;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .score-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(111, 66, 193, 0.25);
+            color: #d2d5f9;
+            font-size: 14px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .score-status.locked {
+            color: #8b97b9;
+        }
+
+        .score-hint {
+            font-size: 14px;
+            color: #8888aa;
+            line-height: 1.6;
+            border-left: 2px solid #7c3aed;
+            padding-left: 10px;
+            margin-top: 8px;
+        }
+
+        .score-bar {
+            width: 100%;
+            height: 4px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            width: 0;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #7c3aed, #3b82f6);
+            transition: width 0.7s ease;
+        }
+
+        .tips-card,
+        .final-card {
+            border-radius: 18px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .tips-card {
+            border-left: 3px solid #f59e0b;
+            min-height: 0;
+        }
+
+        .final-card {
+            border-left: 3px solid #10b981;
+            background: rgba(16, 185, 129, 0.05);
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .tips-card h4,
+        .final-card h4 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .tips-card p,
+        .final-card p,
+        .final-card li {
+            color: #cbd5e1;
+            font-size: 14px;
+            line-height: 1.75;
+        }
+
+        .final-card p {
+            flex: 1;
+        }
+
+        .final-card h4 + p {
+            margin-top: 8px;
+        }
+
+        .final-card h4 + p {
+            margin-top: 8px;
+        }
+
+        .final-card.locked p {
+            color: #9ca3af;
+            flex: 1;
+        }
+
+        .final-card ul {
+            padding-left: 18px;
+            margin: 0;
+            list-style: none;
+            display: grid;
+            gap: 10px;
+        }
+
+        .final-card li {
+            position: relative;
+            padding-left: 12px;
+        }
+
+        .final-card li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #10b981;
+        }
+
+        .locked-note {
+            font-style: italic;
+            color: #8b97b9;
+        }
+
+        .mobile-score-badge {
+            display: none;
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 20;
+            padding: 16px 20px;
+            border-radius: 24px;
+            background: rgba(9, 10, 22, 0.95);
+            border: 1px solid rgba(111, 66, 193, 0.25);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+            min-width: 220px;
+        }
+
+        .mobile-score-badge strong {
+            font-size: 1rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .mobile-score-badge div {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .mobile-score-badge span {
+            color: #9ca3af;
+            font-size: 0.92rem;
+        }
+
+        @media (max-width: 980px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .mobile-score-badge {
+                display: block;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .app-shell {
+                padding: 12px;
+            }
+
+            .container {
+                width: calc(100vw - 24px);
+                height: calc(100vh - 24px);
+                padding: 20px;
+            }
+
+            .header {
+                padding: 20px 20px 16px;
+            }
+
+            .messages {
+                padding: 24px 20px;
+            }
+
+            .chat-input-wrap {
+                padding: 18px 20px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-shell">
+        <div class="container">
+            <div class="main-panel">
+                <div class="header">
+                    <div class="header-logo"><span>AC</span></div>
+                    <div class="header-text">
+                        <h1>Alex Chen</h1>
+                        <p>AI Cohort · <span class="online-indicator"></span> Ready to Interview</p>
+                    </div>
+                </div>
+
+                <div id="startScreen" class="start-screen">
+                    <div class="start-content">
+                        <div class="hero-avatar"></div>
+                        <h2>Ready for your interview?</h2>
+                        <p>This agent interviews you on your 31-day AI Cohort learnings: RAG, Vector DBs, Prompt Engineering, Agentic AI, MCP, Deployment, Production AI. Questions adapt to your progress.</p>
+                        <button class="start-btn" onclick="startInterview()">Begin Session <i class="ph-bold ph-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <div id="chatPanel" class="chat-panel" style="display:none;">
+                    <div id="chatWindow" class="messages"></div>
+                    <div class="chat-input-wrap" id="inputWrapper" style="display:none;">
+                        <div class="input-area">
+                            <input id="userInput" type="text" placeholder="Type your response..." onkeypress="handleKeyPress(event)" autocomplete="off">
+                            <button id="sendBtn" class="send-button" onclick="sendMessage()" title="Send Message"><i class="ph-bold ph-paper-plane-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="sidebar">
+                <div class="sidebar-title">⚡ Live Interview Feedback</div>
+                <div id="scoreCard" class="score-card locked">
+                    <div class="score-label">ESTIMATED SKILL SCORE</div>
+                    <div id="currentScore" class="score-value">— —</div>
+                    <div class="score-bar">
+                        <div id="scoreFill" class="score-bar-fill"></div>
+                    </div>
+                    <div class="locked-score-state">
+                        <div class="locked-score-icon">🔒</div>
+                        <div class="locked-score-box">Score will appear here after your first answer</div>
+                    </div>
+                    <div id="scoreStatus" class="score-status locked"><i class="ph-fill ph-lock-key"></i> Unlocks after first answer</div>
+                    <div id="scoreHint" class="score-hint locked-note">Submit your first answer to reveal your live score.</div>
+                </div>
+
+                <div class="tips-card">
+                    <h4><span>💡</span> Quick Tips</h4>
+                    <p id="sidebarTip">Answer the interviewer directly and cite examples from your experience.</p>
+                </div>
+
+                <div id="finalCard" class="final-card locked">
+                    <h4><span>🔒</span> Final Feedback</h4>
+                    <p>Complete the interview to see full detailed feedback and strengths in this panel.</p>
+                </div>
+            </aside>
+
+            <div id="mobileScoreBadge" class="mobile-score-badge" style="display:none;">
+                <strong>Estimated Score</strong>
+                <div id="mobileScoreValue">--</div>
+                <span id="mobileScoreHint">Submit your first answer to reveal your live score.</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const sessionId = "session-" + Math.random().toString(36).substring(7);
+        let isDone = false;
+        let userTurnCount = 0;
+        let interviewStarted = false;
+        let scoreUnlocked = false;
+        let initialIntro = null;
+
+        const candidateData = {
+            id: "CAND-001",
+            name: "Sarah Johnson",
+            jobRole: "Senior Data Engineer",
+            yearsExperience: 9,
+            education: "MS Computer Science",
+            status: "COMPLETED"
+        };
+
+        const chatWindow = document.getElementById('chatWindow');
+        const startScreen = document.getElementById('startScreen');
+        const chatPanel = document.getElementById('chatPanel');
+        const inputWrapper = document.getElementById('inputWrapper');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const currentScore = document.getElementById('currentScore');
+        const scoreFill = document.getElementById('scoreFill');
+        const scoreStatus = document.getElementById('scoreStatus');
+        const scoreHint = document.getElementById('scoreHint');
+        const sidebarTip = document.getElementById('sidebarTip');
+        const finalCard = document.getElementById('finalCard');
+        const mobileScoreValue = document.getElementById('mobileScoreValue');
+        const mobileScoreHint = document.getElementById('mobileScoreHint');
+        const scoreCard = document.getElementById('scoreCard');
+
+        function createMessage(text, sender) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `message-wrapper ${sender}`;
+
+            const meta = document.createElement('div');
+            meta.className = 'message-meta';
+
+            const avatar = document.createElement('div');
+            avatar.className = `message-avatar ${sender === 'agent' ? '' : 'user'}`;
+            avatar.innerHTML = sender === 'agent' ? '<span>AC</span>' : '<i class="ph-fill ph-user"></i>';
+
+            const metaText = document.createElement('div');
+            metaText.className = 'message-meta-text';
+
+            const label = document.createElement('div');
+            label.className = 'message-label';
+            label.textContent = sender === 'agent' ? 'ALEX CHEN' : candidateData.name;
+            metaText.appendChild(label);
+
+            if (sender === 'agent') {
+                const subtitle = document.createElement('div');
+                subtitle.className = 'message-subtitle';
+                subtitle.textContent = 'AI Cohort Interviewer';
+                metaText.appendChild(subtitle);
+            }
+
+            meta.appendChild(avatar);
+            meta.appendChild(metaText);
+            wrapper.appendChild(meta);
+
+            const msg = document.createElement('div');
+            msg.className = `message ${sender}`;
+
+            // Normalize any personal name mentions to the generic 'Candidate'
+            let displayText = text;
+            if (sender === 'agent') {
+                displayText = displayText.replace(new RegExp(candidateData.name, 'gi'), 'Candidate').replace(/\bcandidate\b/gi, 'Candidate');
+            }
+            let messageHtml = displayText.replace(/\n/g, '<br>');
+            if (sender === 'agent') {
+                messageHtml = messageHtml.replace(/(question:)\s*/i, '$1<br>');
+            }
+
+            msg.innerHTML = messageHtml;
+            wrapper.appendChild(msg);
+            chatWindow.appendChild(wrapper);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function createThinkingBubble() {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'message-wrapper agent thinking';
+
+            const meta = document.createElement('div');
+            meta.className = 'message-meta';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.innerHTML = '<span>AC</span>';
+
+            const metaText = document.createElement('div');
+            metaText.className = 'message-meta-text';
+
+            const label = document.createElement('div');
+            label.className = 'message-label';
+            label.textContent = 'ALEX CHEN';
+            metaText.appendChild(label);
+
+            const subtitle = document.createElement('div');
+            subtitle.className = 'message-subtitle';
+            subtitle.textContent = 'AI Cohort Interviewer';
+            metaText.appendChild(subtitle);
+
+            meta.appendChild(avatar);
+            meta.appendChild(metaText);
+            wrapper.appendChild(meta);
+
+            const msg = document.createElement('div');
+            msg.className = 'message agent thinking';
+            msg.innerHTML = `
+                <div class="thinking-box">
+                    <div class="thinking-title">[ALEX CHEN]</div>
+                    <div class="thinking-subtitle">Senior AI Engineer</div>
+                    <div>Reviewing your answer...</div>
+                    <div class="thinking-dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                </div>
+            `;
+
+            wrapper.appendChild(msg);
+            chatWindow.appendChild(wrapper);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            return wrapper;
+        }
+
+        function updateSidebarScore() {
+            // Scoring: base score 50 (initial). First real answer does not change score.
+            // Each subsequent answer adds 20 points, capped at 100.
+            const base = 50;
+            let estimatedScore = base;
+            if (userTurnCount > 1) {
+                estimatedScore = Math.min(100, base + (userTurnCount - 1) * 20);
+            }
+            const showScore = scoreUnlocked && userTurnCount > 0;
+
+            currentScore.textContent = showScore ? `${estimatedScore}` : '--';
+            if (scoreFill) scoreFill.style.width = showScore ? `${estimatedScore}%` : '0%';
+            mobileScoreValue.textContent = showScore ? `${estimatedScore}` : '--';
+            mobileScoreHint.textContent = showScore ? 'Live score based on your answers.' : 'Submit your first answer to reveal your live score.';
+
+            if (!showScore) {
+                scoreCard.classList.add('locked');
+                scoreStatus.className = 'score-status locked';
+                scoreStatus.innerHTML = '<i class="ph-fill ph-lock-key"></i> Unlocks after first answer';
+                scoreHint.textContent = 'Submit your first answer to reveal your live score.';
+                sidebarTip.textContent = 'Your score is hidden until you begin the interview.';
+                finalCard.classList.add('locked');
+                finalCard.innerHTML = '<h4><span>🔒</span> Final Feedback</h4><p>Complete the interview to see full detailed feedback and strengths in this panel.</p>';
+                return;
+            }
+
+            scoreCard.classList.remove('locked');
+            finalCard.classList.remove('locked');
+
+            if (estimatedScore >= 71) {
+                scoreStatus.className = 'score-status';
+                scoreStatus.innerHTML = '<i class="ph-fill ph-star"></i> Excellent — interview ready! ⭐';
+                scoreHint.textContent = 'Strong answers so far — keep demonstrating confidence and clarity.';
+                sidebarTip.textContent = 'Keep giving direct examples and connect answers to practical system design where possible.';
+            } else if (estimatedScore >= 41) {
+                scoreStatus.className = 'score-status';
+                scoreStatus.innerHTML = '<i class="ph-fill ph-lightbulb"></i> Solid answers, push deeper 💡';
+                scoreHint.textContent = 'Nice progress — dig a bit deeper into architecture and tradeoffs.';
+                sidebarTip.textContent = 'Explain why you chose a solution and mention potential edge cases.';
+            } else {
+                scoreStatus.className = 'score-status';
+                scoreStatus.innerHTML = '<i class="ph-fill ph-fire"></i> Keep going, you\'re warming up 🔥';
+                scoreHint.textContent = 'Warm up with the next question and focus on clear conceptual reasoning.';
+                sidebarTip.textContent = 'Stay concise, and show your thought process step by step.';
+            }
+
+            finalCard.innerHTML = '<h4><span>✅</span> Final Feedback</h4><p>Complete the interview to reveal your full summary, strengths, gaps, and recommended next steps.</p>';
+        }
+
+        async function startInterview() {
+            startScreen.style.display = 'none';
+            chatPanel.style.display = 'flex';
+            inputWrapper.style.display = 'block';
+            updateSidebarScore();
+
+            try {
+                const res = await fetch('/api/interview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, candidate: candidateData })
+                });
+                const data = await res.json();
+                createMessage(data.reply, 'agent');
+                initialIntro = data.reply;
+                interviewStarted = true;
+                if (data.reply && !data.reply.toLowerCase().includes('mock response') && !data.reply.toLowerCase().includes('reconnects')) {
+                    scoreUnlocked = true;
+                }
+                updateSidebarScore();
+            } catch (err) {
+                createMessage('Let’s continue with the next question while the system reconnects. What is your approach to designing scalable services?', 'agent');
+            }
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text || isDone) return;
+
+            // Detect greeting-only messages (e.g., "hi", "hello") on the first turn and handle locally
+            const greetingRe = /^\s*(hi|hello|hey|yo|hi there|hello there)\b[!.,]?\s*$/i;
+            if (greetingRe.test(text) && userTurnCount === 0) {
+                // show candidate greeting but do not count as an answer or call the server
+                createMessage(text, 'candidate');
+                userInput.value = '';
+                // Re-show the initial intro (if available) or a generic welcome
+                if (initialIntro) {
+                    createMessage(initialIntro, 'agent');
+                } else {
+                    createMessage('Hi Candidate, welcome! I am ready to begin the interview. Please answer the first question when you are ready.', 'agent');
+                }
+                // do not increment userTurnCount or unlock score
+                return;
+            }
+
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            sendBtn.classList.add('disabled');
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            createMessage(text, 'candidate');
+            userTurnCount += 1;
+            updateSidebarScore();
+            userInput.value = '';
+
+            const thinkingBubble = createThinkingBubble();
+
+            const responsePromise = fetch('/api/interview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId, message: text })
+            }).then(async res => {
+                if (!res.ok) return null;
+                return res.json();
+            }).catch(() => null);
+
+            try {
+                const [data] = await Promise.all([responsePromise, new Promise(resolve => setTimeout(resolve, 2500))]);
+                if (thinkingBubble.parentNode) {
+                    thinkingBubble.parentNode.removeChild(thinkingBubble);
+                }
+
+                if (data && data.reply) {
+                    createMessage(data.reply, 'agent');
+                    if (data.done) {
+                        isDone = true;
+                        if (data.feedback) {
+                            addFeedbackCard(data.feedback);
+                        }
+                        inputWrapper.style.display = 'none';
+                    }
+                } else {
+                    createMessage('Let’s continue with the next question while the system reconnects. What is your approach to designing scalable services?', 'agent');
+                }
+            } catch (err) {
+                if (thinkingBubble.parentNode) {
+                    thinkingBubble.parentNode.removeChild(thinkingBubble);
+                }
+                createMessage('Let’s continue with the next question while the system reconnects. What is your approach to designing scalable services?', 'agent');
+            } finally {
+                if (!isDone) {
+                    userInput.disabled = false;
+                    sendBtn.disabled = false;
+                    sendBtn.classList.remove('disabled');
+                    userInput.focus();
+                    chatWindow.scrollTo({
+                        top: chatWindow.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+        }
+
+        function addFeedbackCard(feedback) {
+            updateSidebarScore();
+            finalCard.innerHTML = '<h4><span>✅</span> Final Feedback</h4>';
+            const list = document.createElement('ul');
+            if (feedback.summary) list.innerHTML += `<li><strong>Summary:</strong> ${feedback.summary}</li>`;
+            if (feedback.strengths && feedback.strengths.length) list.innerHTML += `<li><strong>Strengths:</strong> ${feedback.strengths.join(', ')}</li>`;
+            if (feedback.gaps && feedback.gaps.length) list.innerHTML += `<li><strong>Knowledge Gaps:</strong> ${feedback.gaps.join(', ')}</li>`;
+            if (feedback.next && feedback.next.length) list.innerHTML += `<li><strong>Next Steps:</strong> ${feedback.next.join(' / ')}</li>`;
+            finalCard.appendChild(list);
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+    </script>
+</body>
+
+</html>
