@@ -1,4 +1,6 @@
-require('dotenv').config();
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config()
+}
 const { Anthropic } = require('@anthropic-ai/sdk');
 const { GoogleGenAI } = require('@google/genai');
 const fs = require('fs');
