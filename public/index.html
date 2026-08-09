@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -637,7 +637,7 @@
         }
 
         .score-value {
-            font-size: 64px;
+            font-size: 48px;
             font-weight: 800;
             color: #4a4a6a;
             letter-spacing: 0.04em;
@@ -658,6 +658,11 @@
             color: #a78bfa;
         }
 
+        .sidebar-card {
+            overflow: hidden;
+            word-wrap: break-word;
+        }
+
         .sidebar-title {
             font-size: 18px;
             font-weight: 700;
@@ -676,7 +681,7 @@
         }
 
         .score-value {
-            font-size: 64px;
+            font-size: 48px;
             font-weight: 800;
             color: #4a4a6a;
             letter-spacing: 0.04em;
@@ -728,6 +733,9 @@
             font-weight: 700;
             text-align: center;
             margin-bottom: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .score-status.locked {
@@ -948,7 +956,7 @@
 
             <aside class="sidebar">
                 <div class="sidebar-title">⚡ Live Interview Feedback</div>
-                <div id="scoreCard" class="score-card locked">
+                <div id="scoreCard" class="score-card locked sidebar-card">
                     <div class="score-label">ESTIMATED SKILL SCORE</div>
                     <div id="currentScore" class="score-value">— —</div>
                     <div class="score-bar">
@@ -962,12 +970,12 @@
                     <div id="scoreHint" class="score-hint locked-note">Submit your first answer to reveal your live score.</div>
                 </div>
 
-                <div class="tips-card">
+                <div class="tips-card sidebar-card">
                     <h4><span>💡</span> Quick Tips</h4>
                     <p id="sidebarTip">Answer the interviewer directly and cite examples from your experience.</p>
                 </div>
 
-                <div id="finalCard" class="final-card locked">
+                <div id="finalCard" class="final-card locked sidebar-card">
                     <h4><span>🔒</span> Final Feedback</h4>
                     <p>Complete the interview to see full detailed feedback and strengths in this panel.</p>
                 </div>
@@ -1116,10 +1124,11 @@
             // Scoring: base score 50 (initial). First real answer does not change score.
             // Each subsequent answer adds 20 points, capped at 100.
             const base = 50;
-            let estimatedScore = base;
+            let actualScore = base;
             if (userTurnCount > 1) {
-                estimatedScore = Math.min(100, base + (userTurnCount - 1) * 20);
+                actualScore = Math.min(100, base + (userTurnCount - 1) * 20);
             }
+            let estimatedScore = Math.min(userTurnCount * 20, actualScore);
             const showScore = scoreUnlocked && userTurnCount > 0;
 
             currentScore.textContent = showScore ? `${estimatedScore}` : '--';

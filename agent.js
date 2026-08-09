@@ -25,7 +25,8 @@ Topics: RAG, Vector DBs, Prompt Engineering,
 Agentic AI, MCP, AI Deployment, Production AI.
 
 Rules:
-- Only ask about cohort topics
+- NEVER ask generic programming questions.
+- Only ask about: RAG, Vector DBs, Prompt Engineering, Agentic AI, MCP, AI Deployment, Production AI Systems.
 - Only quiz completed_missions
 - Skip skipped_topics
 - Min 8 questions, 4 topics
