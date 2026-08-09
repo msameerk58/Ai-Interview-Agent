@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Interview Agent</title>
+    <title>AI Cohort Interview Agent</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
@@ -517,29 +517,13 @@
             box-shadow: none;
         }
 
-        .thinking-box {
-            padding: 16px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .thinking-title {
-            margin-bottom: 10px;
-            font-size: 0.82rem;
-            color: #d1d5ff;
-            letter-spacing: 0.02em;
-        }
-
-        .thinking-subtitle {
-            margin-bottom: 10px;
-            font-size: 11px;
-            color: #6b7280;
-            line-height: 1.4;
-        }
-
-        .thinking-dots {
-            margin-top: 10px;
+        .thinking-cylinder {
+            padding: 12px 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: transparent;
+            border: none;
         }
 
         .dot {
@@ -665,6 +649,14 @@
             border: 1px solid rgba(124, 58, 237, 0.23);
             border-left: 4px solid #7c3aed;
             color: #e5e7ff;
+        }
+
+        .message.agent.thinking {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+            margin-top: 4px;
         }
 
         .message.candidate {
@@ -985,16 +977,16 @@
         <div class="container">
             <div class="main-panel">
                 <div class="header">
-                    <div class="header-logo"><span>AI</span></div>
+                    <div class="header-logo"><span>AC</span></div>
                     <div class="header-text">
-                        <h1>AI Interview Agent</h1>
-                        <p>AI Interview · <span class="online-indicator"></span> Ready to Interview</p>
+                        <h1>AI Cohort Interview Agent</h1>
+                        <p>AI Cohort · <span class="online-indicator"></span> Ready to Interview</p>
                     </div>
                 </div>
 
                 <div id="startScreen" class="start-screen">
                     <div class="start-header">
-                        <h2>AI Interview Agent</h2>
+                        <h2>AI Cohort Interview Agent</h2>
                         <p>Select a candidate to begin an adaptive AI-driven technical interview</p>
                     </div>
                     <div class="candidates-grid" id="candidatesGrid">
@@ -1148,14 +1140,14 @@
 
             const avatar = document.createElement('div');
             avatar.className = `message-avatar ${sender === 'agent' ? '' : 'user'}`;
-            avatar.innerHTML = sender === 'agent' ? '<span>AI</span>' : '<i class="ph-fill ph-user"></i>';
+            avatar.innerHTML = sender === 'agent' ? '<span>AC</span>' : '<i class="ph-fill ph-user"></i>';
 
             const metaText = document.createElement('div');
             metaText.className = 'message-meta-text';
 
             const label = document.createElement('div');
             label.className = 'message-label';
-            label.textContent = sender === 'agent' ? 'AI Interviewer' : candidateData.name;
+            label.textContent = sender === 'agent' ? 'AI Cohort Interviewer' : candidateData.name;
             metaText.appendChild(label);
 
             meta.appendChild(avatar);
@@ -1190,14 +1182,14 @@
 
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
-            avatar.innerHTML = '<span>AI</span>';
+            avatar.innerHTML = '<span>AC</span>';
 
             const metaText = document.createElement('div');
             metaText.className = 'message-meta-text';
 
             const label = document.createElement('div');
             label.className = 'message-label';
-            label.textContent = 'AI Interviewer';
+            label.textContent = 'AI Cohort Interviewer';
             metaText.appendChild(label);
 
             meta.appendChild(avatar);
@@ -1207,15 +1199,10 @@
             const msg = document.createElement('div');
             msg.className = 'message agent thinking';
             msg.innerHTML = `
-                <div class="thinking-box">
-                    <div class="thinking-title">[AI INTERVIEWER]</div>
-                    <div class="thinking-subtitle">Senior AI Engineer</div>
-                    <div>Reviewing your answer...</div>
-                    <div class="thinking-dots">
-                        <span class="dot"></span>
-                        <span class="dot"></span>
-                        <span class="dot"></span>
-                    </div>
+                <div class="thinking-cylinder">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
                 </div>
             `;
 

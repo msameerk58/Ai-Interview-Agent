@@ -72,7 +72,7 @@
       ],
       "signals": {
         "commitDays": 28,
-        "missionsCompleted": 30,
+        "missionsCompleted": 10,
         "missionsFirstTry": 20
       }
     },
@@ -149,7 +149,7 @@
       ],
       "signals": {
         "commitDays": 22,
-        "missionsCompleted": 29,
+        "missionsCompleted": 11,
         "missionsFirstTry": 10
       }
     },
@@ -226,7 +226,7 @@
       ],
       "signals": {
         "commitDays": 31,
-        "missionsCompleted": 31,
+        "missionsCompleted": 12,
         "missionsFirstTry": 30
       }
     },
@@ -302,7 +302,7 @@
       ],
       "signals": {
         "commitDays": 18,
-        "missionsCompleted": 28,
+        "missionsCompleted": 10,
         "missionsFirstTry": 6
       }
     },
@@ -379,7 +379,7 @@
       ],
       "signals": {
         "commitDays": 30,
-        "missionsCompleted": 31,
+        "missionsCompleted": 11,
         "missionsFirstTry": 22
       }
     },
@@ -454,7 +454,7 @@
       ],
       "signals": {
         "commitDays": 19,
-        "missionsCompleted": 24,
+        "missionsCompleted": 12,
         "missionsFirstTry": 2
       }
     },
@@ -529,7 +529,7 @@
       ],
       "signals": {
         "commitDays": 26,
-        "missionsCompleted": 27,
+        "missionsCompleted": 10,
         "missionsFirstTry": 22
       }
     },
@@ -610,7 +610,7 @@
       ],
       "signals": {
         "commitDays": 25,
-        "missionsCompleted": 27,
+        "missionsCompleted": 11,
         "missionsFirstTry": 15
       }
     },
@@ -687,7 +687,7 @@
       ],
       "signals": {
         "commitDays": 31,
-        "missionsCompleted": 31,
+        "missionsCompleted": 12,
         "missionsFirstTry": 29
       }
     }

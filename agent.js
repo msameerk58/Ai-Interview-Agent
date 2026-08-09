@@ -26,12 +26,15 @@ Agentic AI, MCP, AI Deployment, Production AI.
 
 Rules:
 - NEVER ask generic programming questions.
+- NEVER ask about RESTful APIs, variables, functions, classes or generic programming.
 - Only ask about: RAG, Vector DBs, Prompt Engineering, Agentic AI, MCP, AI Deployment, Production AI Systems.
 - Only quiz completed_missions
 - Skip skipped_topics
 - Min 8 questions, 4 topics
 - Acknowledge each answer specifically
 - Follow up if answer is vague
+- PROGRESSIVE DIFFICULTY: For every specific domain, always start with a Basic question. If answered correctly, progress to a Medium question, and then a Hard question.
+- EXPLICIT CORRECTION: If the candidate's answer is wrong or incorrect, explicitly tell them that the answer is wrong and correct them before moving on.
 
 Data: {candidate_profile} {curriculum_json} {conversation_history}
 
@@ -62,7 +65,7 @@ Always reference earlier answers when relevant.
 connect to Y?"
 
 RULE 5 — GREETING:
-Begin with: "Hi [name], I'm the AI Interview Agent. Let's assess your learnings. Starting with —" then ask the first question.
+Begin with: "Hi [name], I'm your AI Cohort interviewer. Let's assess your cohort learnings. " then immediately ask the first technical question tailored to my background as a {job_role}.
 Do NOT say "Hi candidate" — use their actual name.
 
 Current interview context: {conversation_history}
@@ -70,7 +73,8 @@ Candidate profile: {candidate_profile}
 Curriculum: {curriculum_json}`;
 
 function buildSystemPrompt(candidate) {
-    return `${SYSTEM_PROMPT}
+    const customizedPrompt = SYSTEM_PROMPT.replace('{job_role}', candidate.jobRole || 'candidate');
+    return `${customizedPrompt}
 
 Candidate Profile:
 ${JSON.stringify(candidate, null, 2)}
@@ -105,7 +109,7 @@ async function callAnthropic(systemInstruction, messages) {
     ];
 
     const response = await anthropicClient.messages.create({
-        model: 'claude-opus-4-6',
+        model: 'claude-3-5-sonnet-20240620',
         messages: requestMessages,
         max_tokens: 1024,
         temperature: 0.7,
@@ -121,7 +125,7 @@ async function callGemini(systemInstruction, messages) {
 
     const formattedMessages = mapMessagesForGemini(messages);
     const response = await geminiClient.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-1.5-flash',
         contents: formattedMessages,
         config: {
             systemInstruction: systemInstruction,
@@ -133,13 +137,34 @@ async function callGemini(systemInstruction, messages) {
 }
 
 const fallbackQuestions = [
-    "To start us off, could you explain what a variable is in programming and why it's a fundamental concept?",
-    "Great. Next, what is the difference between a function and a class in programming?",
-    "How does an API help different software components communicate with each other?",
-    "In a data engineering context, what does a data pipeline do and why is it important?",
-    "What is the difference between batch processing and stream processing?",
-    "How do you ensure data quality when you build data systems?",
-    "Describe one way you would scale a service to handle more users without sacrificing reliability."
+    // RAG
+    "Let's start with RAG. Can you explain the basic concept of a Retrieval-Augmented Generation pipeline?",
+    "In a RAG system, how do you decide between semantic search and keyword search for retrieval?",
+    "How would you optimize a RAG pipeline that is suffering from high latency and irrelevant context retrieval?",
+    // Vector DBs
+    "Moving on to Vector Databases. What exactly is a vector embedding?",
+    "What is the difference between vector database index types like HNSW and IVF-PQ?",
+    "How do you handle scaling and partition pruning in a distributed Vector Database?",
+    // Prompt Engineering
+    "Let's discuss Prompt Engineering. What is the difference between zero-shot and few-shot prompting?",
+    "How does Chain-of-Thought prompting improve the reasoning capabilities of an LLM?",
+    "What strategies would you use to prevent prompt injection attacks in a public-facing application?",
+    // Agentic AI
+    "Now on to Agentic AI. What is the difference between a simple LLM chain and an AI Agent?",
+    "Can you explain the ReAct (Reasoning and Acting) framework in the context of Agentic workflows?",
+    "How do you design a multi-agent orchestration system to handle conflicting agent decisions?",
+    // MCP
+    "Regarding Model Context Protocol (MCP), what problem does it solve for LLMs?",
+    "How does MCP securely connect an LLM to external databases and APIs?",
+    "Describe how you would implement a custom MCP server to expose legacy enterprise data to an LLM.",
+    // AI Deployment
+    "For AI Deployment, what is the most common way to serve an LLM in production?",
+    "How do you handle streaming responses and token rate limits when serving LLMs to thousands of users?",
+    "What is your approach to achieving zero-downtime deployments for large, stateful AI models?",
+    // Production AI Systems
+    "Finally, looking at Production AI Systems, what are LLM hallucinations?",
+    "How do you automatically evaluate and mitigate hallucinations and bias in LLM outputs?",
+    "Explain your strategy for continuous monitoring and automated fine-tuning of an LLM in production."
 ];
 
 function sanitizeAgentReply(reply, candidate) {
@@ -157,11 +182,11 @@ function sanitizeAgentReply(reply, candidate) {
     }
     
     // Replace references to Alex / Alex Chen / ALEX CHEN / ALEX
-    sanitized = sanitized.replace(/Alex Chen/gi, 'AI Interview Agent')
-                         .replace(/ALEX CHEN/g, 'AI INTERVIEW AGENT')
-                         .replace(/\bAlex, your AI Cohort interviewer\b/gi, 'the AI Interview Agent')
-                         .replace(/\bAlex\b/g, 'AI Interview Agent')
-                         .replace(/\bALEX\b/g, 'AI INTERVIEW AGENT');
+    sanitized = sanitized.replace(/Alex Chen/gi, 'AI Cohort Interview Agent')
+                         .replace(/ALEX CHEN/g, 'AI COHORT INTERVIEW AGENT')
+                         .replace(/\bAlex, your AI Cohort interviewer\b/gi, 'your AI Cohort interviewer')
+                         .replace(/\bAlex\b/g, 'AI Cohort Interview Agent')
+                         .replace(/\bALEX\b/g, 'AI COHORT INTERVIEW AGENT');
 
     // Also sanitize generic 'candidate' to 'Candidate'
     sanitized = sanitized.replace(/\bcandidate\b/gi, 'Candidate');
@@ -173,7 +198,8 @@ function createFallbackReply(messages, turnCount, candidate) {
     const role = candidate ? (candidate.jobRole || '').toLowerCase() : '';
     
     if (messages.length === 1 && messages[0].role === 'user') {
-        let firstQuestion = "Can you explain how a RAG pipeline works and why it's preferred over a standalone LLM?";
+        const candidateName = candidate && candidate.name ? candidate.name : 'Candidate';
+        let firstQuestion = "Can you walk me through how a RAG pipeline works?";
         
         if (role.includes('data engineer')) {
             firstQuestion = "Can you describe how you design a scalable data pipeline to ingest, clean, and load large datasets, and which tools you prefer?";
@@ -191,7 +217,7 @@ function createFallbackReply(messages, turnCount, candidate) {
             firstQuestion = "How do you design a highly available, fault-tolerant system architecture that scales to millions of users?";
         }
 
-        return `Hi Candidate, I'm the AI Interview Agent. Let's assess your learnings. Starting with — ${firstQuestion}`;
+        return `Hi ${candidateName}, I'm your AI Cohort interviewer. Let's assess your cohort learnings. ${firstQuestion}`;
     }
 
     let roleQuestions = fallbackQuestions;
@@ -311,7 +337,7 @@ async function initSession(sessionId, candidate) {
     const firstTurnPrompt = [
         {
             role: "user",
-            content: `Hello! I am ready to begin the interview. Please greet me by my name (${candidate.name}), introduce yourself as the AI Interview Agent, and immediately ask me my first technical question tailored to my background as a ${candidate.jobRole} and my curriculum progress.`
+            content: `Hello! I am ready to begin the interview. Please greet me exactly as requested in RULE 5 (using my name: ${candidate.name}) and ask the exact first question specified in RULE 5.`
         }
     ];
 
