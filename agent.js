@@ -14,7 +14,7 @@ const geminiClient = process.env.GEMINI_API_KEY ? new GoogleGenAI({
 }) : null;
 
 // Load curriculum to give to the model
-const curriculum = JSON.parse(fs.readFileSync('./curriculum.json', 'utf-8'));
+const curriculum = JSON.parse(fs.readFileSync(require('path').join(__dirname, 'curriculum.json'), 'utf-8'));
 
 // State store: sessionId -> state
 // state = { candidate, messages: [], turnCount }
