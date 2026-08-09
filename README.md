@@ -1,65 +1,95 @@
-# AI Technical Interviewer
+# 🤖 AI Technical Interviewer
 
-A lightweight Node.js interview simulator with a static React-like frontend and a Gemini-backed AI interviewer.
+A lightweight, browser-based technical interview simulator powered by a Node.js/Express backend and a Gemini AI interviewer — complete with live prompts, real-time scoring, and a configurable candidate curriculum.
 
-## Features
+---
 
-- Interactive technical interview flow in the browser
-- Live interviewer prompts via `/api/interview`
-- Sidebar score and feedback UI
-- Fallback handling for API rate limits
-- Configurable candidate profile and curriculum
+## ✨ Features
 
-## Project Structure
+- 🎙️ **Interactive interview flow** — conduct full technical interviews directly in the browser
+- 🧠 **Gemini-backed AI interviewer** — dynamic, context-aware questions via the Gemini API
+- 📊 **Live score & feedback sidebar** — real-time evaluation as the interview progresses
+- 🔁 **Rate-limit fallback** — graceful neutral responses when the API limit is reached
+- ⚙️ **Configurable profiles** — customize candidate details and interview curriculum via JSON
 
-- `server.js` - Express backend serving the frontend and interview API
-- `agent.js` - AI session logic, Gemini prompt builder, and conversation state
-- `public/` - Static frontend assets and UI
-- `curriculum.json` - Interview curriculum used by the AI prompts
-- `package.json` - Node dependencies and metadata
+---
 
-## Requirements
+## 🗂️ Project Structure
 
-- Node.js 18+ recommended
-- npm
-- A valid Gemini API key from Google Cloud
+```
+ai-technical-interviewer/
+├── server.js           # Express backend — serves frontend & interview API
+├── agent.js            # AI session logic, Gemini prompt builder & conversation state
+├── curriculum.json     # Interview curriculum consumed by AI prompts
+├── package.json        # Node.js dependencies and metadata
+└── public/             # Static frontend assets and UI
+```
 
-## Setup
+---
 
-1. Clone or download this repository.
-2. Install dependencies:
+## 📋 Prerequisites
+
+| Requirement | Version |
+|---|---|
+| Node.js | 18+ recommended |
+| npm | Latest stable |
+| Gemini API key | From [Google AI Studio](https://aistudio.google.com/) |
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/your-username/ai-technical-interviewer.git
+cd ai-technical-interviewer
+```
+
+### 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-3. Create a `.env` file in the project root and add your Gemini API key:
+### 3. Configure environment variables
+
+Create a `.env` file in the project root:
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-## Run
-
-Start the app:
+### 4. Start the server
 
 ```bash
 node server.js
 ```
 
-Then open:
+### 5. Open in your browser
 
 ```
 http://localhost:3000
 ```
 
-## API
+---
 
-### POST /api/interview
+## 🔌 API Reference
 
-This endpoint drives the interview.
+### `POST /api/interview`
 
-- To start a new session:
+The core endpoint that drives the entire interview session.
+
+---
+
+#### Start a new session
+
+Send candidate details to initialize the interview:
+
+```http
+POST /api/interview
+Content-Type: application/json
+```
 
 ```json
 {
@@ -75,7 +105,16 @@ This endpoint drives the interview.
 }
 ```
 
-- To continue the conversation:
+---
+
+#### Continue the conversation
+
+Send a candidate message to proceed to the next question:
+
+```http
+POST /api/interview
+Content-Type: application/json
+```
 
 ```json
 {
@@ -84,12 +123,27 @@ This endpoint drives the interview.
 }
 ```
 
-## Notes
+---
 
-- The frontend assumes the backend is running on the same origin.
-- The app uses the Gemini SDK from `@google/genai`.
-- If the API rate limit is reached, the app falls back to a neutral model response to keep the interview flowing.
+## ⚙️ Configuration
 
-## License
+The `curriculum.json` file controls the interview structure and topics. Update it to tailor the interview for different roles, skill levels, or domains — no code changes required.
 
-ISC
+---
+
+## 📝 Notes
+
+- The frontend assumes the backend is running on the **same origin** (default: `localhost:3000`).
+- The app uses **`@google/genai`** as the Gemini SDK.
+- When the Gemini API rate limit is hit, the app automatically falls back to a neutral model response to keep the session flowing without interruption.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Backend** — Node.js, Express
+- **AI** — Google Gemini via `@google/genai`
+- **Frontend** — Static HTML/CSS/JS (React-like structure)
+- **Config** — JSON-based curriculum and `.env` secrets
+
+---

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Cohort Interview Agent</title>
+    <title>AI Interview Agent</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
@@ -240,52 +240,18 @@
         .start-screen {
             flex: 1;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 48px;
-        }
-
-        .start-content {
-            width: 100%;
-            max-width: 620px;
-            display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 28px;
+            padding: 48px;
+            overflow-y: auto;
+        }
+
+        .start-header {
             text-align: center;
+            margin-bottom: 40px;
         }
 
-        .hero-avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #8b5cf6, #4f46e5);
-            box-shadow: 0 0 60px rgba(124, 58, 237, 0.4);
-            position: relative;
-            animation: morph 6s ease-in-out infinite;
-        }
-
-        .hero-avatar::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.08), transparent 65%);
-        }
-
-        @keyframes morph {
-            0% {
-                border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-            }
-            50% {
-                border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
-            }
-            100% {
-                border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-            }
-        }
-
-        .start-screen h2 {
+        .start-header h2 {
             font-size: 2.5rem;
             font-weight: 800;
             line-height: 1.03;
@@ -294,34 +260,152 @@
             background-clip: text;
             -webkit-text-fill-color: transparent;
             color: transparent;
+            margin-bottom: 12px;
         }
 
-        .start-screen p {
-            max-width: 520px;
+        .start-header p {
             color: #b0b8d9;
-            font-size: 1rem;
-            line-height: 1.8;
+            font-size: 1.1rem;
         }
 
-        .start-btn {
-            border: none;
-            border-radius: 50px;
-            padding: 14px 32px;
-            font-size: 1rem;
+        .candidates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .candidate-card {
+            background: #12132a;
+            border: 1px solid #2a2a4a;
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .candidate-card:hover {
+            border-color: #7c3aed;
+            transform: translateY(-4px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .card-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8b5cf6, #4f46e5);
+            display: grid;
+            place-items: center;
+            font-size: 1.2rem;
             font-weight: 700;
             color: #fff;
-            background: linear-gradient(135deg, #7c3aed, #4f46e5);
-            box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
+            flex-shrink: 0;
         }
 
-        .start-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 50px rgba(124, 58, 237, 0.7);
+        .card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .card-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .card-role {
+            font-size: 0.85rem;
+            color: #9ca3af;
+        }
+
+        .card-meta {
+            font-size: 0.8rem;
+            color: #8b97b9;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .progress-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .progress-label {
+            font-size: 0.85rem;
+            color: #d1d5ff;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #2a2a4a;
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #7c3aed);
+            border-radius: 99px;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tag {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .tag-green {
+            background: rgba(16,185,129,0.15);
+            color: #10b981;
+            border: 1px solid rgba(16,185,129,0.3);
+        }
+
+        .tag-amber {
+            background: rgba(245,158,11,0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245,158,11,0.3);
+        }
+
+        .card-start-btn {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        .card-start-btn:hover {
+            background: #1d4ed8;
         }
 
         .chat-panel {
@@ -693,30 +777,7 @@
             color: #3a3a5c;
         }
 
-        .locked-score-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
 
-        .locked-score-icon {
-            font-size: 32px;
-            color: #c7c7e1;
-        }
-
-        .locked-score-box {
-            width: 100%;
-            border: 1px dashed #2a2a4a;
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
-            background: rgba(124, 58, 237, 0.03);
-            color: #9ca3af;
-            font-size: 14px;
-            line-height: 1.6;
-        }
 
         .score-status {
             display: flex;
@@ -777,14 +838,11 @@
 
         .tips-card {
             border-left: 3px solid #f59e0b;
-            min-height: 0;
         }
 
         .final-card {
             border-left: 3px solid #10b981;
             background: rgba(16, 185, 129, 0.05);
-            flex: 1;
-            min-height: 0;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
@@ -927,19 +985,20 @@
         <div class="container">
             <div class="main-panel">
                 <div class="header">
-                    <div class="header-logo"><span>AC</span></div>
+                    <div class="header-logo"><span>AI</span></div>
                     <div class="header-text">
-                        <h1>Alex Chen</h1>
-                        <p>AI Cohort · <span class="online-indicator"></span> Ready to Interview</p>
+                        <h1>AI Interview Agent</h1>
+                        <p>AI Interview · <span class="online-indicator"></span> Ready to Interview</p>
                     </div>
                 </div>
 
                 <div id="startScreen" class="start-screen">
-                    <div class="start-content">
-                        <div class="hero-avatar"></div>
-                        <h2>Ready for your interview?</h2>
-                        <p>This agent interviews you on your 31-day AI Cohort learnings: RAG, Vector DBs, Prompt Engineering, Agentic AI, MCP, Deployment, Production AI. Questions adapt to your progress.</p>
-                        <button class="start-btn" onclick="startInterview()">Begin Session <i class="ph-bold ph-arrow-right"></i></button>
+                    <div class="start-header">
+                        <h2>AI Interview Agent</h2>
+                        <p>Select a candidate to begin an adaptive AI-driven technical interview</p>
+                    </div>
+                    <div class="candidates-grid" id="candidatesGrid">
+                        <!-- Cards will be generated here -->
                     </div>
                 </div>
 
@@ -954,17 +1013,13 @@
                 </div>
             </div>
 
-            <aside class="sidebar">
+            <aside class="sidebar" id="sidebar" style="display: none;">
                 <div class="sidebar-title">⚡ Live Interview Feedback</div>
                 <div id="scoreCard" class="score-card locked sidebar-card">
                     <div class="score-label">ESTIMATED SKILL SCORE</div>
                     <div id="currentScore" class="score-value">— —</div>
                     <div class="score-bar">
                         <div id="scoreFill" class="score-bar-fill"></div>
-                    </div>
-                    <div class="locked-score-state">
-                        <div class="locked-score-icon">🔒</div>
-                        <div class="locked-score-box">Score will appear here after your first answer</div>
                     </div>
                     <div id="scoreStatus" class="score-status locked"><i class="ph-fill ph-lock-key"></i> Unlocks after first answer</div>
                     <div id="scoreHint" class="score-hint locked-note">Submit your first answer to reveal your live score.</div>
@@ -997,14 +1052,8 @@
         let scoreUnlocked = false;
         let initialIntro = null;
 
-        const candidateData = {
-            id: "CAND-001",
-            name: "Sarah Johnson",
-            jobRole: "Senior Data Engineer",
-            yearsExperience: 9,
-            education: "MS Computer Science",
-            status: "COMPLETED"
-        };
+        let candidateData = null;
+        let candidatesList = [];
 
         const chatWindow = document.getElementById('chatWindow');
         const startScreen = document.getElementById('startScreen');
@@ -1022,6 +1071,74 @@
         const mobileScoreHint = document.getElementById('mobileScoreHint');
         const scoreCard = document.getElementById('scoreCard');
 
+        async function loadCandidates() {
+            try {
+                const res = await fetch('/api/candidates');
+                const data = await res.json();
+                candidatesList = data.candidates || [];
+                renderCandidates();
+            } catch (err) {
+                console.error("Failed to load candidates", err);
+            }
+        }
+
+        function getInitials(name) {
+            return name.split(' ').map(n => n[0]).join('').toUpperCase();
+        }
+
+        function getWeakness(missions) {
+            const failed = missions.find(m => m.passed === false);
+            if (failed) return failed.title;
+            const skipped = missions.find(m => m.skipped === true);
+            if (skipped) return skipped.title;
+            const highestAttempts = missions.reduce((prev, curr) => (prev.attempts > curr.attempts) ? prev : curr, missions[0]);
+            if (highestAttempts && highestAttempts.attempts > 1) return highestAttempts.title;
+            return "None (Strong Foundation)";
+        }
+
+        function renderCandidates() {
+            const grid = document.getElementById('candidatesGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            
+            candidatesList.forEach(cand => {
+                const mem = cand.member;
+                const sig = cand.signals;
+                const progress = Math.round((sig.missionsCompleted / 31) * 100);
+                const weakness = getWeakness(cand.missions);
+                
+                const card = document.createElement('div');
+                card.className = 'candidate-card';
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="card-avatar">${getInitials(mem.name)}</div>
+                        <div class="card-info">
+                            <div class="card-name">${mem.name}</div>
+                            <div class="card-role">${mem.jobRole}</div>
+                            <div class="card-meta">
+                                <i class="ph-fill ph-graduation-cap"></i> ${mem.education} • ${mem.yearsExperience} YOE
+                            </div>
+                        </div>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-label">
+                            <span>Curriculum Progress</span>
+                            <span>${progress}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+                    <div class="tags-container">
+                        <div class="tag tag-green">✓ Completed ${sig.missionsCompleted} modules</div>
+                        <div class="tag tag-amber">⚠ Weakness: ${weakness}</div>
+                    </div>
+                    <button class="card-start-btn" onclick="startInterview('${mem.id}')">▷ Start Interview</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
         function createMessage(text, sender) {
             const wrapper = document.createElement('div');
             wrapper.className = `message-wrapper ${sender}`;
@@ -1031,22 +1148,15 @@
 
             const avatar = document.createElement('div');
             avatar.className = `message-avatar ${sender === 'agent' ? '' : 'user'}`;
-            avatar.innerHTML = sender === 'agent' ? '<span>AC</span>' : '<i class="ph-fill ph-user"></i>';
+            avatar.innerHTML = sender === 'agent' ? '<span>AI</span>' : '<i class="ph-fill ph-user"></i>';
 
             const metaText = document.createElement('div');
             metaText.className = 'message-meta-text';
 
             const label = document.createElement('div');
             label.className = 'message-label';
-            label.textContent = sender === 'agent' ? 'ALEX CHEN' : candidateData.name;
+            label.textContent = sender === 'agent' ? 'AI Interviewer' : candidateData.name;
             metaText.appendChild(label);
-
-            if (sender === 'agent') {
-                const subtitle = document.createElement('div');
-                subtitle.className = 'message-subtitle';
-                subtitle.textContent = 'AI Cohort Interviewer';
-                metaText.appendChild(subtitle);
-            }
 
             meta.appendChild(avatar);
             meta.appendChild(metaText);
@@ -1080,20 +1190,15 @@
 
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
-            avatar.innerHTML = '<span>AC</span>';
+            avatar.innerHTML = '<span>AI</span>';
 
             const metaText = document.createElement('div');
             metaText.className = 'message-meta-text';
 
             const label = document.createElement('div');
             label.className = 'message-label';
-            label.textContent = 'ALEX CHEN';
+            label.textContent = 'AI Interviewer';
             metaText.appendChild(label);
-
-            const subtitle = document.createElement('div');
-            subtitle.className = 'message-subtitle';
-            subtitle.textContent = 'AI Cohort Interviewer';
-            metaText.appendChild(subtitle);
 
             meta.appendChild(avatar);
             meta.appendChild(metaText);
@@ -1103,7 +1208,7 @@
             msg.className = 'message agent thinking';
             msg.innerHTML = `
                 <div class="thinking-box">
-                    <div class="thinking-title">[ALEX CHEN]</div>
+                    <div class="thinking-title">[AI INTERVIEWER]</div>
                     <div class="thinking-subtitle">Senior AI Engineer</div>
                     <div>Reviewing your answer...</div>
                     <div class="thinking-dots">
@@ -1170,10 +1275,12 @@
             finalCard.innerHTML = '<h4><span>✅</span> Final Feedback</h4><p>Complete the interview to reveal your full summary, strengths, gaps, and recommended next steps.</p>';
         }
 
-        async function startInterview() {
+        async function startInterview(candidateId) {
+            candidateData = candidatesList.find(c => c.member.id === candidateId).member;
             startScreen.style.display = 'none';
             chatPanel.style.display = 'flex';
             inputWrapper.style.display = 'block';
+            document.getElementById('sidebar').style.display = 'flex';
             updateSidebarScore();
 
             try {
@@ -1287,6 +1394,8 @@
         function handleKeyPress(e) {
             if (e.key === 'Enter') sendMessage();
         }
+
+        loadCandidates();
     </script>
 </body>
 

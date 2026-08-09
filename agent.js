@@ -20,7 +20,7 @@ const curriculum = JSON.parse(fs.readFileSync(require('path').join(__dirname, 'c
 // state = { candidate, messages: [], turnCount }
 const sessions = new Map();
 
-const SYSTEM_PROMPT = `You are Alex, AI Cohort Interview Agent.
+const SYSTEM_PROMPT = `You are AI Interview Agent.
 Topics: RAG, Vector DBs, Prompt Engineering,
 Agentic AI, MCP, AI Deployment, Production AI.
 
@@ -35,9 +35,7 @@ Rules:
 
 Data: {candidate_profile} {curriculum_json} {conversation_history}
 
-JSON response only:
-{"next_question":"","is_follow_up":false,
-"topic_area":"","interview_complete":false}
+GOOD examples of transitions:
 "That's a solid foundation, and it connects
 directly to what I want to ask next."
 
@@ -64,7 +62,7 @@ Always reference earlier answers when relevant.
 connect to Y?"
 
 RULE 5 — GREETING:
-Begin with: "Hi [name], I'm Alex, your AI Cohort interviewer. Let's assess your cohort learnings. Starting with —" then ask the first question.
+Begin with: "Hi [name], I'm the AI Interview Agent. Let's assess your learnings. Starting with —" then ask the first question.
 Do NOT say "Hi candidate" — use their actual name.
 
 Current interview context: {conversation_history}
@@ -144,16 +142,138 @@ const fallbackQuestions = [
     "Describe one way you would scale a service to handle more users without sacrificing reliability."
 ];
 
-function createFallbackReply(messages, turnCount) {
-    if (messages.length === 1 && messages[0].role === 'user') {
-        return `Hi Candidate, I'm Alex, your AI Cohort interviewer. Let's assess your cohort learnings. Starting with — Can you explain how a RAG pipeline works and why it's preferred over a standalone LLM?`;
+function sanitizeAgentReply(reply, candidate) {
+    if (typeof reply !== 'string') return reply;
+    let sanitized = reply;
+    
+    // Replace candidate name (both full name and first name)
+    if (candidate && candidate.name) {
+        const fullName = candidate.name;
+        const firstName = candidate.name.split(' ')[0];
+        sanitized = sanitized.replace(new RegExp(fullName, 'gi'), 'Candidate');
+        if (firstName && firstName.length > 1) {
+            sanitized = sanitized.replace(new RegExp('\\b' + firstName + '\\b', 'gi'), 'Candidate');
+        }
     }
+    
+    // Replace references to Alex / Alex Chen / ALEX CHEN / ALEX
+    sanitized = sanitized.replace(/Alex Chen/gi, 'AI Interview Agent')
+                         .replace(/ALEX CHEN/g, 'AI INTERVIEW AGENT')
+                         .replace(/\bAlex, your AI Cohort interviewer\b/gi, 'the AI Interview Agent')
+                         .replace(/\bAlex\b/g, 'AI Interview Agent')
+                         .replace(/\bALEX\b/g, 'AI INTERVIEW AGENT');
 
-    const index = Math.min(turnCount, fallbackQuestions.length - 1);
-    return `Thanks for your answer. ${fallbackQuestions[index]}`;
+    // Also sanitize generic 'candidate' to 'Candidate'
+    sanitized = sanitized.replace(/\bcandidate\b/gi, 'Candidate');
+    
+    return sanitized;
 }
 
-async function generateReply(systemInstruction, messages, turnCount = 0) {
+function createFallbackReply(messages, turnCount, candidate) {
+    const role = candidate ? (candidate.jobRole || '').toLowerCase() : '';
+    
+    if (messages.length === 1 && messages[0].role === 'user') {
+        let firstQuestion = "Can you explain how a RAG pipeline works and why it's preferred over a standalone LLM?";
+        
+        if (role.includes('data engineer')) {
+            firstQuestion = "Can you describe how you design a scalable data pipeline to ingest, clean, and load large datasets, and which tools you prefer?";
+        } else if (role.includes('devops')) {
+            firstQuestion = "Can you describe your approach to setting up a zero-downtime CI/CD deployment pipeline for containerized microservices?";
+        } else if (role.includes('ai engineer') || role.includes('artificial intelligence')) {
+            firstQuestion = "Can you explain how a RAG (Retrieval-Augmented Generation) pipeline works and why it is preferred over a standalone LLM?";
+        } else if (role.includes('backend') || role.includes('software engineer')) {
+            firstQuestion = "Can you describe how you design a RESTful API and what best practices you follow for versioning and authentication?";
+        } else if (role.includes('analyst') || role.includes('marketing') || role.includes('manager') || role.includes('hr')) {
+            firstQuestion = "Can you describe how you translate business goals and stakeholder requirements into clear technical specifications?";
+        } else if (role.includes('intern') || role.includes('junior') || role.includes('student')) {
+            firstQuestion = "Could you explain what version control is, and walk me through how you resolve a merge conflict in Git?";
+        } else if (role.includes('distinguished') || role.includes('architect') || role.includes('lead') || role.includes('principal')) {
+            firstQuestion = "How do you design a highly available, fault-tolerant system architecture that scales to millions of users?";
+        }
+
+        return `Hi Candidate, I'm the AI Interview Agent. Let's assess your learnings. Starting with — ${firstQuestion}`;
+    }
+
+    let roleQuestions = fallbackQuestions;
+    if (role.includes('data engineer')) {
+        roleQuestions = [
+            "How do you handle schema evolution and ensure data quality in your pipelines?",
+            "What is the difference between batch and stream processing, and when would you choose Spark Streaming or Flink over batch MapReduce?",
+            "What are the pros and cons of using a columnar format like Parquet vs row-oriented formats like Avro?",
+            "How do you optimize slow database queries and what indexing strategies do you use?",
+            "Can you describe how you'd scale a database system using sharding or partition pruning?",
+            "Explain how you manage state and handle late-arriving data in streaming applications.",
+            "Finally, how do you approach monitoring, logging, and alerting in data pipelines to detect failures?"
+        ];
+    } else if (role.includes('devops')) {
+        roleQuestions = [
+            "What is Infrastructure as Code (IaC) and how do you use Terraform or CloudFormation to prevent configuration drift?",
+            "How do you manage secrets and configuration variables securely in environments like Kubernetes?",
+            "Explain the difference between mutable and immutable infrastructure and why the latter is preferred.",
+            "How do you set up application performance monitoring (APM) and alert routing using Prometheus, Grafana, or Datadog?",
+            "What strategies do you employ to secure containerized applications and scan for vulnerabilities?",
+            "Can you explain how Kubernetes namespaces, ingress controllers, and service meshes coordinate traffic?",
+            "Finally, describe how you handle disaster recovery and database backups in a multi-region cloud deployment."
+        ];
+    } else if (role.includes('ai engineer') || role.includes('artificial intelligence')) {
+        roleQuestions = [
+            "What is the difference between vector database index types like HNSW and IVF-PQ, and how do they impact retrieval latency?",
+            "How do you evaluate and mitigate hallucinations and bias in LLM outputs in production?",
+            "What is the difference between prompt engineering (e.g. few-shot, CoT) and parameter-efficient fine-tuning (e.g. LoRA)?",
+            "How do Agentic workflows and multi-agent orchestration differ from simple sequential LLM chains?",
+            "Explain how the Model Context Protocol (MCP) helps connect an LLM to external databases and APIs.",
+            "How do you handle streaming responses and token rate limits when serving LLMs to thousands of users?",
+            "Finally, how do you handle security and guardrails to prevent prompt injection attacks?"
+        ];
+    } else if (role.includes('backend') || role.includes('software engineer')) {
+        roleQuestions = [
+            "What is the difference between REST and gRPC, and when would you choose gRPC for microservices communication?",
+            "How does your preferred programming language handle concurrency, and how do you prevent race conditions?",
+            "What are the best practices for designing idempotent API endpoints in a distributed system?",
+            "How do you handle distributed transactions and maintain consistency across different microservices?",
+            "What is horizontal scaling vs vertical scaling, and how do you use load balancers and caching (e.g. Redis) to improve scale?",
+            "How do you handle rate-limiting and circuit-breaking to protect backend services from cascading failures?",
+            "Finally, explain the CAP theorem and how it guides your database selection (SQL vs NoSQL)."
+        ];
+    } else if (role.includes('analyst') || role.includes('marketing') || role.includes('manager') || role.includes('hr')) {
+        roleQuestions = [
+            "How do you use data analytics and metrics (like KPI, ROI) to measure the success of a software project?",
+            "What is your approach to prioritizing features in a product roadmap when different stakeholders have conflicting demands?",
+            "Can you explain how A/B testing works and how you determine if the results are statistically significant?",
+            "How do you perform user funnel analysis to identify drop-offs and friction in a software application?",
+            "What techniques do you use to manage risk and identify potential bottlenecks early in a project lifecycle?",
+            "How do you ensure smooth communication and alignment between non-technical stakeholders and engineering teams?",
+            "Finally, describe a situation where you had to make a critical decision based on incomplete or ambiguous data."
+        ];
+    } else if (role.includes('intern') || role.includes('junior') || role.includes('student')) {
+        roleQuestions = [
+            "What is the difference between synchronous and asynchronous code execution, and when would you use async/await?",
+            "What are the main principles of Object-Oriented Programming (OOP) and why are they useful?",
+            "What is the difference between client-side rendering (CSR) and server-side rendering (SSR)?",
+            "How do you write unit tests for your code, and why is software testing important?",
+            "What is the difference between a stack and a queue, and can you give a real-world example of where each is used?",
+            "How do relational databases work, and what is the purpose of primary and foreign keys?",
+            "Finally, what are some best practices for writing clean, readable, and self-documenting code?"
+        ];
+    } else if (role.includes('distinguished') || role.includes('architect') || role.includes('lead') || role.includes('principal')) {
+        roleQuestions = [
+            "How do you manage technical debt in large, legacy systems while continuing to ship new features?",
+            "What is your approach to threat modeling, compliance, and system security at the architectural level?",
+            "How do you design APIs that are backwards compatible and easy to version across multiple teams?",
+            "Explain the CAP theorem and how it influences your choice of databases and consistency models.",
+            "How do you mentor senior engineers and align multiple autonomous teams around a cohesive technical vision?",
+            "What strategies do you use to evaluate new technologies and decide whether to build, buy, or adopt open-source?",
+            "Finally, describe how you handle disaster recovery and site reliability engineering (SRE) post-mortems."
+        ];
+    }
+
+    const index = Math.min(turnCount - 1, roleQuestions.length - 1);
+    // index should not go below 0
+    const finalIndex = Math.max(0, index);
+    return `Thanks for your answer. ${roleQuestions[finalIndex]}`;
+}
+
+async function generateReply(systemInstruction, messages, turnCount = 0, candidate) {
     if (anthropicClient) {
         try {
             const result = await callAnthropic(systemInstruction, messages);
@@ -161,7 +281,7 @@ async function generateReply(systemInstruction, messages, turnCount = 0) {
         } catch (error) {
             console.error('Anthropic request failed:', error.message || error);
             if (!geminiClient) {
-                return createFallbackReply(messages, turnCount);
+                return createFallbackReply(messages, turnCount, candidate);
             }
         }
     }
@@ -175,7 +295,7 @@ async function generateReply(systemInstruction, messages, turnCount = 0) {
         }
     }
 
-    return createFallbackReply(messages, turnCount);
+    return createFallbackReply(messages, turnCount, candidate);
 }
 
 async function initSession(sessionId, candidate) {
@@ -188,16 +308,16 @@ async function initSession(sessionId, candidate) {
 
     const systemPrompt = buildSystemPrompt(candidate);
     
-    // Use deterministic fallback to ensure consistent greeting format for the first question.
-    const introMsg = createFallbackReply(
-        [{ role: "user", content: "Hello! I am ready to begin the interview. Please provide a brief welcoming intro statement, and then immediately ask me my first basic foundational question." }],
-        0
-    );
+    const firstTurnPrompt = [
+        {
+            role: "user",
+            content: `Hello! I am ready to begin the interview. Please greet me by my name (${candidate.name}), introduce yourself as the AI Interview Agent, and immediately ask me my first technical question tailored to my background as a ${candidate.jobRole} and my curriculum progress.`
+        }
+    ];
+
+    const reply = await generateReply(systemPrompt, firstTurnPrompt, 0, candidate);
+    const sanitizedIntro = sanitizeAgentReply(reply, candidate);
     
-    // sanitize any embedded personal name to the generic 'Candidate'
-    const sanitizedIntro = typeof introMsg === 'string'
-        ? introMsg.replace(new RegExp(candidate.name, 'gi'), 'Candidate').replace(/\bcandidate\b/gi, 'Candidate')
-        : introMsg;
     state.messages.push({ role: "assistant", content: sanitizedIntro });
     state.turnCount = 1;
 
@@ -221,11 +341,8 @@ async function handleTurn(sessionId, message) {
     }
 
     const systemPrompt = buildSystemPrompt(state.candidate);
-    const reply = await generateReply(systemPrompt, state.messages, state.turnCount);
-    // sanitize model output: replace candidate real name with generic 'Candidate'
-    const sanitizedReply = typeof reply === 'string'
-        ? reply.replace(new RegExp(state.candidate.name, 'gi'), 'Candidate').replace(/\bcandidate\b/gi, 'Candidate')
-        : reply;
+    const reply = await generateReply(systemPrompt, state.messages, state.turnCount, state.candidate);
+    const sanitizedReply = sanitizeAgentReply(reply, state.candidate);
     state.messages.push({ role: 'assistant', content: sanitizedReply });
     state.turnCount++;
 
