@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31-Day Progress Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0A0B14;
+            --card-bg: rgba(18, 19, 42, 0.95);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-purple: #7c3aed;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --text-primary: #eef2ff;
+            --text-secondary: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at top right, rgba(26, 5, 51, 0.6), transparent 40%),
+                        linear-gradient(180deg, #0A0B14 0%, #090A13 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(transparent 0 1px, rgba(255, 255, 255, 0.02) 1px 2px);
+            opacity: 0.1;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .layout-container {
+            width: 100%;
+            max-width: 1400px;
+            padding: 40px 24px;
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .layout-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .main-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .side-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 8px;
+        }
+        
+        .header-left h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .header-left p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .header-right {
+            text-align: right;
+        }
+
+        .header-right .streak {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #f59e0b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .header-right .date {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Top Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .stat-val {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* Section Containers */
+        .section-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Today's Challenge */
+        .challenge-card {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(18, 19, 42, 0.95) 100%);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-left: 4px solid var(--accent-purple);
+        }
+
+        .challenge-meta {
+            font-size: 1rem;
+            color: #d1d5ff;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .challenge-meta span {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            color: #fff;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: fit-content;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.4);
+        }
+
+        /* 31-Day Calendar Grid */
+        .calendar-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .day-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: grid;
+            place-items: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .day-circle:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .day-circle.completed {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.4);
+            color: #34d399;
+        }
+
+        .day-circle.today {
+            background: rgba(124, 58, 237, 0.2);
+            border-color: var(--accent-purple);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(124, 58, 237, 0.5);
+            animation: pulseToday 2s infinite;
+        }
+
+        @keyframes pulseToday {
+            0% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(124, 58, 237, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+        }
+
+        .day-circle.missed {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #f87171;
+            text-decoration: line-through;
+        }
+
+        /* Topic Progress Bars */
+        .topic-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .topic-row {
+            display: grid;
+            grid-template-columns: 140px 1fr 100px 100px;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .topic-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .progress-bar-wrap {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 99px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #7c3aed);
+            border-radius: 99px;
+        }
+
+        .topic-days {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+
+        .topic-status {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .status-complete { color: var(--accent-green); }
+        .status-active { color: #60a5fa; }
+        .status-upcoming { color: var(--text-secondary); }
+
+        /* Chart */
+        .chart-container {
+            width: 100%;
+            height: 250px;
+            position: relative;
+        }
+
+        /* Achievements */
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .badge-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+        }
+
+        .badge-card.unlocked {
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .badge-icon {
+            font-size: 24px;
+            filter: grayscale(100%) opacity(0.5);
+        }
+
+        .badge-card.unlocked .badge-icon {
+            filter: none;
+        }
+
+        .badge-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+        }
+
+        .badge-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .badge-card.unlocked .badge-name {
+            color: #fff;
+        }
+
+        .badge-status {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .badge-status.unlocked { color: var(--accent-green); }
+        .badge-status.locked { color: #6b7280; }
+
+        /* Summary Box */
+        .summary-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(124, 58, 237, 0.05));
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+        
+        .summary-row strong {
+            color: #fff;
+        }
+
+        .summary-rec {
+            margin-top: 8px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #d1d5ff;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="layout-container">
+        
+        <div class="main-col">
+            <div class="header">
+                <div class="header-left">
+                    <h1 id="welcomeText">Welcome back, User 👋</h1>
+                    <p id="dateText">Today is Loading... • Day - of 31</p>
+                </div>
+                <div class="header-right">
+                    <div class="streak" id="headerStreak">🔥 0 days</div>
+                    <div class="date">Current Streak</div>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-label">Day</div>
+                    <div class="stat-val" id="statDay">0/31</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Streak</div>
+                    <div class="stat-val" id="statStreak">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Score</div>
+                    <div class="stat-val" id="statScore">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Topics</div>
+                    <div class="stat-val" id="statTopics">0/0</div>
+                </div>
+            </div>
+
+            <div class="section-card challenge-card">
+                <div class="section-title"><i class="ph-bold ph-calendar-star"></i> Today's Challenge</div>
+                <div class="challenge-meta">
+                    <div id="challengeDay">📅 Today — Day 0</div>
+                    <div id="challengeTopic">Topic: <span>Loading...</span></div>
+                    <div id="challengeFocus">Focus: <span>Adaptive interview</span></div>
+                    <div>Estimated time: <span>15 mins</span></div>
+                </div>
+                <button class="btn-start" onclick="window.location.href='index.html'">
+                    Start Today's Interview <i class="ph-bold ph-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="section-card">
+                <div class="section-title"><i class="ph-bold ph-calendar-blank"></i> 31-Day Journey</div>
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Circles populated via JS -->
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-title"><i class="ph-bold ph-chart-line-up"></i> Score History</div>
+                <div class="chart-container">
+                    <canvas id="scoreChart"></canvas>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-title"><i class="ph-bold ph-books"></i> Topic Progress</div>
+                <div class="topic-list" id="topicList">
+                    <!-- Progress bars populated via JS -->
+                </div>
+            </div>
+
+        </div>
+
+        <div class="side-col">
+            <div class="section-card" style="margin-top: 80px;"> <!-- Push down to align roughly with top stats -->
+                <div class="section-title"><i class="ph-bold ph-medal"></i> Achievements</div>
+                <div class="achievements-grid" id="achievementsGrid">
+                    <!-- Badges populated via JS -->
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-title"><i class="ph-bold ph-lightning"></i> Weekly Insights</div>
+                <div class="summary-box">
+                    <div class="summary-row">
+                        <span>Best Topic:</span>
+                        <strong id="bestTopic">N/A</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Needs Work:</span>
+                        <strong id="worstTopic">N/A</strong>
+                    </div>
+                    <div class="summary-rec" id="summaryRec">
+                        Complete a few interviews to unlock personalized recommendations.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Authentication Check
+        const storedUser = localStorage.getItem('currentUser');
+        if (!storedUser) {
+            window.location.href = 'login.html';
+        }
+        
+        let user = JSON.parse(storedUser);
+
+        // --- Mock Data Injection for Demonstration if user is empty ---
+        // If the user just signed up and has no history, let's inject a mock history 
+        // to make the dashboard look beautiful based on their selected schedule.
+        if (user.schedule && (!user.completedDays || user.completedDays.length === 0)) {
+            user.currentDay = 8;
+            user.streak = 5;
+            user.completedDays = [];
+            
+            let pastScores = [75, 82, 68, 90, 85, 78, 88];
+            for(let i=0; i<7; i++) {
+                if(user.schedule[i]) {
+                    user.schedule[i].completed = true;
+                    user.completedDays.push({
+                        day: i+1,
+                        topicId: user.schedule[i].topicId,
+                        topicName: user.schedule[i].topicName,
+                        score: pastScores[i],
+                        date: new Date(Date.now() - (7-i)*24*60*60*1000).toISOString().split('T')[0]
+                    });
+                }
+            }
+            // Recalculate average
+            const sum = user.completedDays.reduce((acc, curr) => acc + curr.score, 0);
+            user.averageScore = Math.round(sum / user.completedDays.length);
+            localStorage.setItem('currentUser', JSON.stringify(user));
+        }
+
+        // Default values if somehow still missing
+        const currentDay = user.currentDay || 1;
+        const streak = user.streak || 0;
+        const avgScore = user.averageScore || 0;
+        const completedDays = user.completedDays || [];
+        const schedule = user.schedule || [];
+        const selectedTopics = user.selectedTopics || [];
+
+        // 1. Header Updates
+        const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+        document.getElementById('welcomeText').innerText = `Welcome back, ${user.name.split(' ')[0]} 👋`;
+        document.getElementById('dateText').innerText = `Today is ${dateStr} • Day ${currentDay} of 31`;
+        document.getElementById('headerStreak').innerText = `🔥 ${streak} days`;
+
+        // 2. Top Stats
+        const completedCount = completedDays.length;
+        const topicsDone = new Set(completedDays.map(d => d.topicId)).size;
+        
+        document.getElementById('statDay').innerText = `${currentDay}/31`;
+        document.getElementById('statStreak').innerText = streak;
+        document.getElementById('statScore').innerText = `${avgScore}/100`;
+        document.getElementById('statTopics').innerText = `${topicsDone}/${selectedTopics.length || 7}`;
+
+        // 3. Today's Challenge
+        const todaySchedule = schedule.find(s => s.day === currentDay);
+        if (todaySchedule) {
+            document.getElementById('challengeDay').innerText = `📅 Today — Day ${currentDay}`;
+            document.getElementById('challengeTopic').innerHTML = `Topic: <span>${todaySchedule.topicName}</span>`;
+            document.getElementById('challengeFocus').innerHTML = `Focus: <span>Adaptive interview</span>`;
+        }
+
+        // 4. 31-Day Calendar
+        const calGrid = document.getElementById('calendarGrid');
+        for (let i = 1; i <= 31; i++) {
+            const circle = document.createElement('div');
+            circle.className = 'day-circle';
+            circle.innerText = i;
+            
+            const completedRecord = completedDays.find(d => d.day === i);
+            
+            if (completedRecord) {
+                circle.classList.add('completed');
+                circle.title = `${completedRecord.topicName}\nScore: ${completedRecord.score}\nDate: ${completedRecord.date}`;
+            } else if (i === currentDay) {
+                circle.classList.add('today');
+                circle.title = `Today's Challenge`;
+            } else if (i < currentDay) {
+                circle.classList.add('missed');
+                circle.title = 'Missed';
+            } else {
+                circle.title = 'Upcoming';
+            }
+            
+            calGrid.appendChild(circle);
+        }
+
+        // 5. Topic Progress Bars
+        const topicList = document.getElementById('topicList');
+        selectedTopics.forEach(topic => {
+            // Find schedule range for this topic
+            const topicSched = schedule.filter(s => s.topicId === topic.id);
+            if (topicSched.length === 0) return;
+            
+            const firstDay = topicSched[0].day;
+            const lastDay = topicSched[topicSched.length - 1].day;
+            
+            // Calculate completion
+            const totalForTopic = topicSched.length;
+            const completedForTopic = completedDays.filter(d => d.topicId === topic.id).length;
+            const progressPct = (completedForTopic / totalForTopic) * 100;
+            
+            let statusHtml = '';
+            if (completedForTopic === totalForTopic) {
+                statusHtml = `<span class="status-complete">✅ Complete</span>`;
+            } else if (completedForTopic > 0 || (currentDay >= firstDay && currentDay <= lastDay)) {
+                statusHtml = `<span class="status-active">🔵 In Progress</span>`;
+            } else {
+                statusHtml = `<span class="status-upcoming">⬜ Upcoming</span>`;
+            }
+
+            const row = document.createElement('div');
+            row.className = 'topic-row';
+            row.innerHTML = `
+                <div class="topic-name" title="${topic.name}">${topic.name}</div>
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar-fill" style="width: ${progressPct}%"></div>
+                </div>
+                <div class="topic-days">Day ${firstDay}-${lastDay}</div>
+                <div class="topic-status">${statusHtml}</div>
+            `;
+            topicList.appendChild(row);
+        });
+
+        // 6. Chart.js Score History
+        const ctx = document.getElementById('scoreChart').getContext('2d');
+        const labels = completedDays.map(d => `Day ${d.day}`);
+        const dataPts = completedDays.map(d => d.score);
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels.length ? labels : ['Day 1'],
+                datasets: [{
+                    label: 'Interview Score',
+                    data: dataPts.length ? dataPts : [0],
+                    borderColor: '#7c3aed',
+                    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#fff',
+                    pointRadius: 5,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#9ca3af' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#9ca3af' }
+                    }
+                }
+            }
+        });
+
+        // 7. Achievements
+        const achievements = [
+            { id: 'first', icon: '🏆', name: 'First Interview', condition: completedCount > 0 },
+            { id: 'streak3', icon: '🔥', name: '3-Day Streak', condition: streak >= 3 },
+            { id: 'score80', icon: '⭐', name: 'Score 80+', condition: completedDays.some(d => d.score >= 80) },
+            { id: 'allTopics', icon: '🎯', name: 'Complete All Topics', condition: topicsDone === selectedTopics.length && selectedTopics.length > 0 },
+            { id: 'perfect', icon: '🏅', name: 'Perfect Score (100)', condition: completedDays.some(d => d.score === 100) },
+            { id: 'champ', icon: '👑', name: '31-Day Champion', condition: completedCount === 31 }
+        ];
+
+        const achGrid = document.getElementById('achievementsGrid');
+        achievements.forEach(ach => {
+            const card = document.createElement('div');
+            card.className = `badge-card ${ach.condition ? 'unlocked' : 'locked'}`;
+            card.innerHTML = `
+                <div class="badge-icon">${ach.icon}</div>
+                <div class="badge-info">
+                    <div class="badge-name">${ach.name}</div>
+                    <div class="badge-status ${ach.condition ? 'unlocked' : 'locked'}">
+                        ${ach.condition ? '✅ Unlocked' : '❌ Locked'}
+                    </div>
+                </div>
+            `;
+            achGrid.appendChild(card);
+        });
+
+        // 8. Weekly Insights
+        if (completedDays.length > 0) {
+            // Group scores by topic
+            const topicScores = {};
+            completedDays.forEach(d => {
+                if(!topicScores[d.topicName]) topicScores[d.topicName] = [];
+                topicScores[d.topicName].push(d.score);
+            });
+            
+            let bestName = 'N/A', bestAvg = -1;
+            let worstName = 'N/A', worstAvg = 101;
+            
+            Object.keys(topicScores).forEach(t => {
+                const arr = topicScores[t];
+                const avg = arr.reduce((a,b)=>a+b,0) / arr.length;
+                if(avg > bestAvg) { bestAvg = avg; bestName = t; }
+                if(avg < worstAvg) { worstAvg = avg; worstName = t; }
+            });
+
+            if(bestAvg !== -1) {
+                document.getElementById('bestTopic').innerText = `${bestName} (${Math.round(bestAvg)}/100)`;
+            }
+            if(worstAvg !== 101) {
+                document.getElementById('worstTopic').innerText = `${worstName} (${Math.round(worstAvg)}/100)`;
+            }
+            
+            if(todaySchedule && todaySchedule.topicName === worstName) {
+                document.getElementById('summaryRec').innerText = `Focus hard on ${worstName} today. This is your chance to improve your weakest area!`;
+            } else if (todaySchedule) {
+                document.getElementById('summaryRec').innerText = `Focus on ${todaySchedule.topicName} today. You're showing strong fundamentals overall!`;
+            }
+        }
+
+    </script>
+</body>
+</html>
