@@ -265,7 +265,10 @@ Used when both Anthropic and Gemini are unavailable.
 | `server.js` | `/api/interview` endpoint |
 | `curriculum.json` | 31-day cohort modules & missions |
 | `candidates.json` | 9 candidate profiles |
-| `public/index.html` | Frontend — cards, chat, feedback UI |
+| `public/login.html` | Frontend — Authentication & Sign Up |
+| `public/interests.html` | Frontend — Area of Interest scheduling |
+| `public/dashboard.html` | Frontend — 31-Day Progress Dashboard |
+| `public/index.html` | Frontend — main interview chat & feedback UI |
 
 ---
 

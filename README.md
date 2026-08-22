@@ -9,6 +9,9 @@ A lightweight, browser-based technical interview simulator powered by a Node.js/
 - 🎙️ **Interactive interview flow** — conduct full technical interviews directly in the browser
 - 🧠 **Gemini-backed AI interviewer** — dynamic, context-aware questions via the Gemini API
 - 📊 **Live score & feedback sidebar** — real-time evaluation as the interview progresses
+- 🔐 **Authentication flow** — Clean login and signup interfaces with state management
+- 🎯 **Area of Interest Selection** — Dynamic topic selection to build a personalized 31-day curriculum
+- 📈 **31-Day Progress Dashboard** — Comprehensive home screen to track daily streaks, scores, and schedule
 - 🔁 **Rate-limit fallback** — graceful neutral responses when the API limit is reached
 - ⚙️ **Configurable profiles** — customize candidate details and interview curriculum via JSON
 
@@ -23,6 +26,10 @@ ai-technical-interviewer/
 ├── curriculum.json     # Interview curriculum consumed by AI prompts
 ├── package.json        # Node.js dependencies and metadata
 └── public/             # Static frontend assets and UI
+    ├── login.html      # Authentication UI
+    ├── interests.html  # Area of Interest selection & scheduling
+    ├── dashboard.html  # 31-Day Progress Dashboard
+    └── index.html      # Main Interview Chat UI
 ```
 
 ---
