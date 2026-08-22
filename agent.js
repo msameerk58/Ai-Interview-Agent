@@ -20,57 +20,37 @@ const curriculum = JSON.parse(fs.readFileSync(require('path').join(__dirname, 'c
 // state = { candidate, messages: [], turnCount }
 const sessions = new Map();
 
-const SYSTEM_PROMPT = `You are AI Interview Agent.
-Topics: RAG, Vector DBs, Prompt Engineering,
-Agentic AI, MCP, AI Deployment, Production AI.
-
-Rules:
-- NEVER ask generic programming questions.
-- NEVER ask about RESTful APIs, variables, functions, classes or generic programming.
-- Only ask about: RAG, Vector DBs, Prompt Engineering, Agentic AI, MCP, AI Deployment, Production AI Systems.
-- Only quiz completed_missions
-- Skip skipped_topics
-- Min 8 questions, 4 topics
-- Acknowledge each answer specifically
-- Follow up if answer is vague
-- PROGRESSIVE DIFFICULTY: For every specific domain, always start with a Basic question. If answered correctly, progress to a Medium question, and then a Hard question.
-- EXPLICIT CORRECTION: If the candidate's answer is wrong or incorrect, explicitly tell them that the answer is wrong and correct them before moving on.
-
-Data: {candidate_profile} {curriculum_json} {conversation_history}
-
-GOOD examples of transitions:
-"That's a solid foundation, and it connects
-directly to what I want to ask next."
-
-BAD examples (NEVER use these):
-"Great answer!"
-"That's correct!"
-"Excellent!"
-"Good job!"
-
-RULE 2 — ONE QUESTION ONLY:
-Ask exactly ONE question per response.
-Never ask two questions in the same message.
-
-RULE 3 — NATURAL LANGUAGE:
-Occasionally use human filler phrases
-(max once every 4 questions):
-"Right, right. So following up..."
-"Mmm okay. Let me push back slightly..."
-"That's an interesting way to frame it..."
-
-RULE 4 — BUILD ON PREVIOUS ANSWERS:
-Always reference earlier answers when relevant.
-"Earlier you mentioned X — how does that
-connect to Y?"
-
-RULE 5 — GREETING:
-Begin with: "Hi [name], I'm your AI Cohort interviewer. Let's assess your cohort learnings. " then immediately ask the first technical question tailored to my background as a {job_role}.
-Do NOT say "Hi candidate" — use their actual name.
-
-Current interview context: {conversation_history}
-Candidate profile: {candidate_profile}
-Curriculum: {curriculum_json}`;
+const SYSTEM_PROMPT = `You are AI Cohort Interview Agent.
+ONLY ask questions from these 7 topics:
+1. RAG & Retrieval pipelines
+2. Vector Databases & Embeddings
+3. Prompt Engineering techniques
+4. Agentic AI & Agent loops
+5. Model Context Protocol (MCP)
+6. AI Deployment & serving
+7. Production AI Systems & monitoring
+QUESTION RULES:
+- Start every topic with Basic question
+- If answered well → ask Medium question
+- If answered well → ask Hard question
+- If answer is wrong → correct them explicitly
+- If answer is vague → ask follow-up
+- Reference previous answers in follow-ups
+- Never ask about REST APIs, variables,
+  functions, classes, OOP, Git, databases
+- One question per response only
+- Min 8 questions, 4 topics minimum
+GOOD question examples:
+Basic: "Explain how a RAG pipeline works"
+Medium: "How do you choose chunk size in RAG?"
+Hard: "How would you debug poor RAG retrieval quality?"
+BAD questions (never ask these):
+"What is a variable?"
+"Explain REST API design"
+"What is OOP?"
+Candidate data: {candidate_profile}
+Curriculum: {curriculum_json}
+History: {conversation_history}`;
 
 function buildSystemPrompt(candidate) {
     const customizedPrompt = SYSTEM_PROMPT.replace('{job_role}', candidate.jobRole || 'candidate');
@@ -337,7 +317,7 @@ async function initSession(sessionId, candidate) {
     const firstTurnPrompt = [
         {
             role: "user",
-            content: `Hello! I am ready to begin the interview. Please greet me exactly as requested in RULE 5 (using my name: ${candidate.name}) and ask the exact first question specified in RULE 5.`
+            content: `Hello! I am ready to begin the interview. Please greet me (using my name: ${candidate.name}) and ask the first question.`
         }
     ];
 
@@ -379,16 +359,39 @@ async function handleTurn(sessionId, message) {
 }
 
 async function finalizeInterview(sessionId, state) {
-    const feedbackSystemPrompt = `You are an expert AI evaluator. The technical interview has just concluded.
-Review the conversation transcript and output structured feedback in pure JSON format containing exactly the following keys:
+    const feedbackSystemPrompt = `You are an expert AI technical evaluator.
+Review this interview transcript carefully.
+Return ONLY pure JSON, no markdown:
 {
-  "score": <number between 0 and 100 based on technical accuracy and communication>,
-  "summary": "overall summary string",
-  "strengths": ["list of strengths"],
-  "gaps": ["list of knowledge gaps"],
-  "next": ["list of actionable next steps"]
-}
-Do NOT wrap the JSON in markdown blocks. Output purely the JSON object.`;
+  "score": <0-100>,
+  "grade": "A/B/C/D/F",
+  "summary": "2-3 sentence overall assessment",
+  "topic_scores": {
+    "RAG": <0-100 or null if not covered>,
+    "VectorDB": <0-100 or null>,
+    "PromptEng": <0-100 or null>,
+    "AgenticAI": <0-100 or null>,
+    "MCP": <0-100 or null>,
+    "Deployment": <0-100 or null>,
+    "Production": <0-100 or null>
+  },
+  "strengths": [
+    "Specific strength with example from interview",
+    "Specific strength with example from interview",
+    "Specific strength with example from interview"
+  ],
+  "gaps": [
+    "Specific gap with exact question they struggled on",
+    "Specific gap with exact question they struggled on"
+  ],
+  "study_plan": {
+    "day1_2": "Specific topic to study",
+    "day3_4": "Specific topic to study",
+    "day5_7": "Specific topic to study"
+  },
+ "elevator_pitch": "One sentence candidate can use in real interviews",
+  "interview_readiness": "Not Ready/Almost Ready/Ready/Interview-Ready"
+}`;
 
     const transcript = state.messages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\\n\\n');
     
@@ -399,7 +402,7 @@ Do NOT wrap the JSON in markdown blocks. Output purely the JSON object.`;
         try {
             response = await anthropicClient.messages.create({
                 model: 'claude-opus-4-6',
-                messages: [{ role: 'user', content: `${feedbackSystemPrompt}\n\n${transcript}` }],
+                messages: [{ role: 'user', content: `${feedbackSystemPrompt}\n\nTranscript: ${transcript}` }],
                 max_tokens: 1024,
                 temperature: 0.2,
             });
@@ -413,7 +416,7 @@ Do NOT wrap the JSON in markdown blocks. Output purely the JSON object.`;
         try {
             response = await geminiClient.models.generateContent({
                 model: 'gemini-2.5-flash',
-                contents: [{ role: 'user', parts: [{ text: `${feedbackSystemPrompt}\n\n${transcript}` }] }],
+                contents: [{ role: 'user', parts: [{ text: `${feedbackSystemPrompt}\n\nTranscript: ${transcript}` }] }],
                 config: {
                     systemInstruction: feedbackSystemPrompt,
                     temperature: 0.2,
@@ -431,10 +434,31 @@ Do NOT wrap the JSON in markdown blocks. Output purely the JSON object.`;
         response = {
             content: JSON.stringify({
                 score: 85,
+                grade: "B",
                 summary: "*(Mock Summary due to API errors)* Overall, the candidate demonstrated solid foundational knowledge and clear communication skills.",
-                strengths: ["Clear communication", "Good grasp of core concepts"],
-                gaps: ["Advanced system architecture concepts"],
-                next: ["Practice more complex, scenario-based architecture problems"]
+                topic_scores: {
+                    "RAG": 80,
+                    "VectorDB": 85,
+                    "PromptEng": null,
+                    "AgenticAI": null,
+                    "MCP": null,
+                    "Deployment": null,
+                    "Production": null
+                },
+                strengths: [
+                    "Clear communication (e.g. explained RAG basics well)",
+                    "Good grasp of core concepts in Vector DBs"
+                ],
+                gaps: [
+                    "Advanced system architecture concepts, specifically around latency optimization"
+                ],
+                study_plan: {
+                    "day1_2": "Review advanced deployment strategies",
+                    "day3_4": "Practice scenario-based architecture problems",
+                    "day5_7": "Mock interviews focusing on weaknesses"
+                },
+                elevator_pitch: "A solid developer with strong fundamentals ready to tackle complex challenges.",
+                interview_readiness: "Ready"
             })
         };
     }
@@ -449,10 +473,26 @@ Do NOT wrap the JSON in markdown blocks. Output purely the JSON object.`;
         console.error("Failed to parse feedback JSON", e);
         feedback = {
             score: 0,
+            grade: "F",
             summary: "Interview concluded. The AI struggled to format the final feedback.",
+            topic_scores: {
+                "RAG": null,
+                "VectorDB": null,
+                "PromptEng": null,
+                "AgenticAI": null,
+                "MCP": null,
+                "Deployment": null,
+                "Production": null
+            },
             strengths: [],
             gaps: [],
-            next: []
+            study_plan: {
+                "day1_2": "N/A",
+                "day3_4": "N/A",
+                "day5_7": "N/A"
+            },
+            elevator_pitch: "N/A",
+            interview_readiness: "Not Ready"
         };
     }
 
