@@ -976,10 +976,13 @@
         <div class="container">
             <div class="main-panel">
                 <div class="header">
-                    <div class="header-logo"><span>AC</span></div>
+                    <div class="header-logo" id="headerLogo"><span>AC</span></div>
                     <div class="header-text">
-                        <h1>AI Cohort Interview Agent</h1>
-                        <p>AI Cohort · <span class="online-indicator"></span> Ready to Interview</p>
+                        <h1 id="headerName">AI Cohort Interview Agent</h1>
+                        <p><span id="headerRole">AI Cohort</span> · <span class="online-indicator"></span> Ready to Interview</p>
+                    </div>
+                    <div style="margin-left: auto;">
+                        <button onclick="handleLogout()" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s ease;">Logout</button>
                     </div>
                 </div>
 
@@ -1036,6 +1039,18 @@
     </div>
 
     <script>
+        // Authentication Check
+        const storedUser = localStorage.getItem('currentUser');
+        if (!storedUser) {
+            window.location.href = 'login.html';
+        }
+        const currentUser = storedUser ? JSON.parse(storedUser) : null;
+
+        function handleLogout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        }
+
         const sessionId = "session-" + Math.random().toString(36).substring(7);
         let isDone = false;
         let userTurnCount = 0;
@@ -1074,7 +1089,15 @@
         }
 
         function getInitials(name) {
+            if (!name) return 'U';
             return name.split(' ').map(n => n[0]).join('').toUpperCase();
+        }
+
+        // Initialize header with logged-in user's details
+        if (currentUser) {
+            document.getElementById('headerLogo').innerHTML = `<span>${getInitials(currentUser.name)}</span>`;
+            document.getElementById('headerName').innerText = currentUser.name;
+            document.getElementById('headerRole').innerText = currentUser.jobRole || 'Candidate';
         }
 
         function getWeakness(missions) {

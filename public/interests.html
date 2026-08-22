@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Area of Interest - AI Interview Agent</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg-color: #0A0B14;
+            --card-bg: #12132a;
+            --card-border: #2a2a4a;
+            --accent-purple: #7c3aed;
+            --accent-purple-glow: rgba(124, 58, 237, 0.2);
+            --text-primary: #eef2ff;
+            --text-secondary: #9ca3af;
+            
+            --diff-beginner: #10b981;
+            --diff-beginner-bg: rgba(16, 185, 129, 0.15);
+            --diff-intermediate: #f59e0b;
+            --diff-intermediate-bg: rgba(245, 158, 11, 0.15);
+            --diff-advanced: #ef4444;
+            --diff-advanced-bg: rgba(239, 68, 68, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        html, body {
+            width: 100%;
+            min-height: 100vh;
+            background: radial-gradient(circle at top right, rgba(26, 5, 51, 0.6), transparent 40%),
+                        linear-gradient(180deg, #0A0B14 0%, #090A13 100%);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(transparent 0 1px, rgba(255, 255, 255, 0.02) 1px 2px);
+            opacity: 0.1;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 1100px;
+            padding: 60px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #ffffff 40%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 24px;
+            padding: 0 10px;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+        }
+
+        .toggle-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #d1d5ff;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            transition: 0.3s;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-container.active .toggle-switch {
+            background: var(--accent-purple);
+        }
+
+        .toggle-container.active .toggle-switch::after {
+            transform: translateX(20px);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            width: 100%;
+            margin-bottom: 48px;
+        }
+
+        /* 3+3+1 grid layout logic */
+        .grid .card:last-child:nth-child(7) {
+            grid-column: 2 / 3; /* Centers the 7th card in a 3-column grid */
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .grid .card:last-child:nth-child(7) {
+                grid-column: 1 / -1; /* spans full width on smaller screens, or could leave it to flow */
+            }
+        }
+
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .grid .card:last-child:nth-child(7) {
+                grid-column: 1 / -1;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(124, 58, 237, 0.4);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .card.selected {
+            border-color: var(--accent-purple);
+            background: linear-gradient(180deg, rgba(124, 58, 237, 0.08) 0%, var(--card-bg) 100%);
+            box-shadow: 0 8px 32px var(--accent-purple-glow);
+        }
+
+        .card.selected::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent-purple);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .icon {
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        .check-circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #4a4a6a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            color: transparent;
+        }
+
+        .card.selected .check-circle {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+            color: #fff;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+            margin-top: 8px;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: auto;
+            width: fit-content;
+        }
+
+        .badge.beginner {
+            color: var(--diff-beginner);
+            background: var(--diff-beginner-bg);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge.intermediate {
+            color: var(--diff-intermediate);
+            background: var(--diff-intermediate-bg);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge.advanced {
+            color: var(--diff-advanced);
+            background: var(--diff-advanced-bg);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .footer {
+            width: 100%;
+            background: rgba(18, 19, 32, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .progress-container {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .progress-text {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #d1d5ff;
+            margin-bottom: 12px;
+        }
+        
+        .progress-subtext {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #7c3aed);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            color: #fff;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(124, 58, 237, 0.45);
+        }
+        
+        .btn-start:disabled {
+            background: #4a4a6a;
+            color: #8b97b9;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>What do you want to master?</h1>
+            <p>Select topics for your 31-day interview practice journey</p>
+        </div>
+
+        <div class="controls">
+            <div class="toggle-container" id="sortToggle" onclick="toggleSort()">
+                <div class="toggle-switch"></div>
+                <div class="toggle-label">Recommended daily order (Beginner to Advanced)</div>
+            </div>
+            <div style="color: #9ca3af; font-size: 0.9rem;">Select at least 1 topic</div>
+        </div>
+
+        <div class="grid" id="topicsGrid">
+            <!-- Rendered via JS -->
+        </div>
+
+        <div class="footer">
+            <div class="progress-container">
+                <div class="progress-text" id="progressText">0 topics selected = 0 days of practice</div>
+                <div class="progress-subtext">(each topic = ~4-5 days)</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <button class="btn-start" id="startBtn" onclick="startJourney()" disabled>
+                Start My Journey <i class="ph-bold ph-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const topics = [
+            {
+                id: 'rag',
+                icon: '🔍',
+                name: 'RAG & Retrieval',
+                desc: 'Master retrieval pipelines and chunking strategies',
+                difficulty: 'Intermediate',
+                level: 2,
+                selected: false
+            },
+            {
+                id: 'vector',
+                icon: '🗄️',
+                name: 'Vector Databases',
+                desc: 'Learn embeddings, FAISS, Pinecone and ChromaDB',
+                difficulty: 'Intermediate',
+                level: 2,
+                selected: false
+            },
+            {
+                id: 'prompt',
+                icon: '✍️',
+                name: 'Prompt Engineering',
+                desc: 'Zero-shot, few-shot, chain of thought mastery',
+                difficulty: 'Beginner',
+                level: 1,
+                selected: false
+            },
+            {
+                id: 'agent',
+                icon: '🤖',
+                name: 'Agentic AI',
+                desc: 'Build autonomous agents and ReAct frameworks',
+                difficulty: 'Advanced',
+                level: 3,
+                selected: false
+            },
+            {
+                id: 'mcp',
+                icon: '🔗',
+                name: 'Model Context Protocol',
+                desc: 'Connect LLMs to external tools and databases',
+                difficulty: 'Advanced',
+                level: 3,
+                selected: false
+            },
+            {
+                id: 'deploy',
+                icon: '🚀',
+                name: 'AI Deployment',
+                desc: 'Serve models at scale in production',
+                difficulty: 'Intermediate',
+                level: 2,
+                selected: false
+            },
+            {
+                id: 'prod',
+                icon: '⚙️',
+                name: 'Production AI Systems',
+                desc: 'Monitoring, safety and guardrails',
+                difficulty: 'Advanced',
+                level: 3,
+                selected: false
+            }
+        ];
+
+        let autoSort = false;
+
+        function toggleSort() {
+            autoSort = !autoSort;
+            const toggleEl = document.getElementById('sortToggle');
+            if(autoSort) {
+                toggleEl.classList.add('active');
+            } else {
+                toggleEl.classList.remove('active');
+            }
+            renderGrid();
+        }
+
+        function toggleTopic(id) {
+            const topic = topics.find(t => t.id === id);
+            if(topic) {
+                topic.selected = !topic.selected;
+                renderGrid();
+                updateProgress();
+            }
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('topicsGrid');
+            grid.innerHTML = '';
+
+            let displayTopics = [...topics];
+            if(autoSort) {
+                displayTopics.sort((a, b) => a.level - b.level);
+            }
+
+            displayTopics.forEach(topic => {
+                const diffClass = topic.difficulty.toLowerCase();
+                const card = document.createElement('div');
+                card.className = `card ${topic.selected ? 'selected' : ''}`;
+                card.onclick = () => toggleTopic(topic.id);
+                
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="icon">${topic.icon}</div>
+                        <div class="check-circle">
+                            <i class="ph-bold ph-check"></i>
+                        </div>
+                    </div>
+                    <div class="card-title">${topic.name}</div>
+                    <div class="card-desc">${topic.desc}</div>
+                    <div class="badge ${diffClass}">Difficulty: ${topic.difficulty}</div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        function updateProgress() {
+            const selectedCount = topics.filter(t => t.selected).length;
+            const progressText = document.getElementById('progressText');
+            const progressFill = document.getElementById('progressFill');
+            const startBtn = document.getElementById('startBtn');
+
+            if(selectedCount === 0) {
+                progressText.innerText = `0 topics selected = 0 days of practice`;
+                progressFill.style.width = '0%';
+                startBtn.disabled = true;
+            } else {
+                const days = selectedCount === 7 ? 31 : selectedCount * 4; // Approx logic
+                progressText.innerText = `${selectedCount} topics = ${selectedCount === 7 ? '31 days of practice' : '~' + days + ' days of practice'}`;
+                progressFill.style.width = `${(selectedCount / 7) * 100}%`;
+                startBtn.disabled = false;
+            }
+        }
+
+        function generateSchedule(selectedTopics) {
+            const totalDays = 31;
+            const schedule = [];
+            
+            // if autoSort is active, generate schedule in difficulty order. Otherwise in selected order
+            let topicsToSchedule = [...selectedTopics];
+            if(autoSort) {
+                topicsToSchedule.sort((a, b) => a.level - b.level);
+            }
+
+            const baseDays = Math.floor(totalDays / topicsToSchedule.length);
+            let extraDays = totalDays % topicsToSchedule.length;
+
+            let currentDay = 1;
+            for(let i = 0; i < topicsToSchedule.length; i++) {
+                const topic = topicsToSchedule[i];
+                let daysForTopic = baseDays + (extraDays > 0 ? 1 : 0);
+                if (extraDays > 0) extraDays--;
+
+                for(let d = 0; d < daysForTopic; d++) {
+                    schedule.push({
+                        day: currentDay++,
+                        topicId: topic.id,
+                        topicName: topic.name,
+                        completed: false
+                    });
+                }
+            }
+            return schedule;
+        }
+
+        function startJourney() {
+            const selectedTopics = topics.filter(t => t.selected);
+            if(selectedTopics.length === 0) return;
+
+            const schedule = generateSchedule(selectedTopics);
+            
+            // Update currentUser in localStorage
+            let currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                currentUser = JSON.parse(currentUser);
+                currentUser.selectedTopics = selectedTopics.map(t => ({ id: t.id, name: t.name, difficulty: t.difficulty }));
+                currentUser.schedule = schedule;
+                currentUser.scheduleStartedAt = new Date().toISOString();
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            }
+
+            // Redirect to dashboard
+            window.location.href = 'index.html';
+        }
+
+        // Check authentication on load
+        const storedUser = localStorage.getItem('currentUser');
+        if (!storedUser) {
+            window.location.href = 'login.html';
+        }
+
+        // Init
+        renderGrid();
+        updateProgress();
+    </script>
+</body>
+</html>

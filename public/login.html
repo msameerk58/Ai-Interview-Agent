@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AI Interview Agent</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg-color: #0A0B14;
+            --panel-bg: rgba(255, 255, 255, 0.03);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --accent-purple: #7c3aed;
+            --accent-blue: #3b82f6;
+            --text-primary: #eef2ff;
+            --text-secondary: #9ca3af;
+            --text-muted: #8b97b9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: #0A0B14;
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        body {
+            background: radial-gradient(circle at bottom right, rgba(26, 5, 51, 0.6), transparent 22%),
+                linear-gradient(180deg, #0A0B14 0%, #090A13 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(transparent 0 1px, rgba(255, 255, 255, 0.03) 1px 2px);
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            height: 90vh;
+            max-height: 800px;
+            border-radius: 24px;
+            background: rgba(18, 19, 32, 0.98);
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+            display: flex;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+
+        .left-panel {
+            flex: 1;
+            padding: 48px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .left-panel::-webkit-scrollbar {
+            width: 0;
+        }
+
+        .right-panel {
+            flex: 1.1;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%), rgba(10, 11, 20, 0.5);
+            border-left: 1px solid var(--panel-border);
+            position: relative;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .right-panel::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Edge */
+        }
+
+        .right-panel-inner {
+            padding: 64px 48px;
+            margin: auto 0;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+
+        .right-panel::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 60%);
+            animation: pulseGlow 15s infinite alternate ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(5%, 5%) scale(1.1); }
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 48px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            display: grid;
+            place-items: center;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+        }
+
+        .logo-icon i {
+            color: #fff;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 6px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-left: 4px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            color: var(--text-muted);
+            font-size: 18px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            background: rgba(10, 11, 20, 0.5);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 14px 16px 14px 44px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            appearance: none;
+        }
+
+        .form-group select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200.svg' width='16' height='16' fill='%238b97b9' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+        }
+        
+        .form-group select option {
+            background: #121320;
+            color: #fff;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+        }
+
+        .btn-submit {
+            margin-top: 12px;
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25);
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(124, 58, 237, 0.35);
+        }
+
+        /* Right Panel Styles */
+        .preview-header {
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .preview-header h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #ffffff 40%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .preview-header p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: start;
+            position: relative;
+            z-index: 1;
+        }
+
+        .benefit-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(124, 58, 237, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .benefit-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(124, 58, 237, 0.1);
+            color: #a78bfa;
+            display: grid;
+            place-items: center;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        
+        .benefit-icon.blue {
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+        }
+
+        .benefit-icon.green {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+        }
+        
+        .benefit-icon.orange {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+        }
+
+        .benefit-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .benefit-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        #login-form {
+            display: none;
+        }
+
+        #login-form.active {
+            display: flex;
+        }
+
+        #signup-form {
+            display: none;
+        }
+
+        #signup-form.active {
+            display: flex;
+        }
+        
+        .error-message {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: -12px;
+            margin-bottom: 8px;
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="left-panel">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="ph-bold ph-robot"></i>
+                </div>
+                <div class="logo-text">AI Interview Agent</div>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('signup')" id="tab-signup">Sign Up</div>
+                <div class="tab" onclick="switchTab('login')" id="tab-login">Login</div>
+            </div>
+
+            <!-- Sign Up Form -->
+            <form class="form-container active" id="signup-form" onsubmit="handleSignup(event)">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-user"></i>
+                        <input type="text" id="signup-name" placeholder="John Doe" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-envelope"></i>
+                        <input type="email" id="signup-email" placeholder="john@example.com" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-lock"></i>
+                        <input type="password" id="signup-password" placeholder="Create a password" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Target Job Role</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-briefcase"></i>
+                        <select id="signup-role" required>
+                            <option value="" disabled selected>Select your role</option>
+                            <option value="Junior Developer">Junior Developer</option>
+                            <option value="Mid-level Developer">Mid-level Developer</option>
+                            <option value="Senior Developer">Senior Developer</option>
+                            <option value="Data Engineer">Data Engineer</option>
+                            <option value="AI Engineer">AI Engineer</option>
+                            <option value="DevOps Engineer">DevOps Engineer</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Create Account</button>
+            </form>
+
+            <!-- Login Form -->
+            <form class="form-container" id="login-form" onsubmit="handleLogin(event)">
+                <div class="error-message" id="login-error">Invalid email or password.</div>
+                
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-envelope"></i>
+                        <input type="email" id="login-email" placeholder="john@example.com" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-lock"></i>
+                        <input type="password" id="login-password" placeholder="Enter your password" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Sign In</button>
+            </form>
+        </div>
+
+        <div class="right-panel">
+            <div class="right-panel-inner">
+                <div class="preview-header">
+                    <h2>Master your next technical interview</h2>
+                    <p>Join the AI Interview Agent platform to simulate real-world technical interviews and level up your career.</p>
+                </div>
+
+                <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i class="ph-bold ph-target"></i>
+                    </div>
+                    <div class="benefit-title">Personalized to your level</div>
+                    <div class="benefit-desc">Questions adapt to your chosen role and experience dynamically.</div>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon blue">
+                        <i class="ph-bold ph-trend-up"></i>
+                    </div>
+                    <div class="benefit-title">Track daily progress</div>
+                    <div class="benefit-desc">Build your 31-day streak and monitor your performance over time.</div>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon green">
+                        <i class="ph-bold ph-robot"></i>
+                    </div>
+                    <div class="benefit-title">Real AI interviewer</div>
+                    <div class="benefit-desc">Experience conversational interviews just like talking to a real human.</div>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon orange">
+                        <i class="ph-bold ph-chart-bar"></i>
+                    </div>
+                    <div class="benefit-title">Detailed feedback</div>
+                    <div class="benefit-desc">Get actionable insights, scorecards, and study plans instantly.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            document.getElementById('tab-signup').classList.remove('active');
+            document.getElementById('tab-login').classList.remove('active');
+            
+            document.getElementById('signup-form').classList.remove('active');
+            document.getElementById('login-form').classList.remove('active');
+            
+            document.getElementById('login-error').style.display = 'none';
+
+            if (tab === 'signup') {
+                document.getElementById('tab-signup').classList.add('active');
+                document.getElementById('signup-form').classList.add('active');
+            } else {
+                document.getElementById('tab-login').classList.add('active');
+                document.getElementById('login-form').classList.add('active');
+            }
+        }
+
+        function handleSignup(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value; // Usually hashed in real app
+            const jobRole = document.getElementById('signup-role').value;
+            
+            const userData = {
+                name,
+                email,
+                password, // Storing temporarily for mock login
+                jobRole,
+                joinDate: new Date().toISOString(),
+                currentDay: 1,
+                completedDays: [],
+                averageScore: 0,
+                streak: 0
+            };
+            
+            // Store user in localstorage (in real app, this goes to backend)
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+            
+            // Redirect to interests page
+            window.location.href = 'interests.html';
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            const storedUserStr = localStorage.getItem('currentUser');
+            
+            if (storedUserStr) {
+                const storedUser = JSON.parse(storedUserStr);
+                if (storedUser.email === email && storedUser.password === password) {
+                    window.location.href = 'interests.html';
+                    return;
+                }
+            }
+            
+            // If we get here, login failed
+            document.getElementById('login-error').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
